@@ -1,0 +1,16 @@
+name: Content Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  basic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required public-repo docs
+        run: |
+          test -f README.md
+          test -f papers/README.md
+          test -f templates/reproducibility-kit/README.md
