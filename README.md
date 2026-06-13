@@ -49,3 +49,11 @@ papers/2026-aom-transfer/
 
 Do not commit generated caches, private review files, unpublished drafts, or
 data that cannot be redistributed.
+
+## License
+
+Reproducibility **code** in this repository is dual-licensed open-source —
+**`CeCILL-2.1 OR AGPL-3.0-or-later`** — with an optional **commercial license** (for any commercial use,
+contact <nirs4all-admin@cirad.fr>). Repository **content** (notes, figures) is **CC-BY-4.0**; deposited
+**manuscripts** carry their publisher's terms where applicable. See [`LICENSING.md`](LICENSING.md) and
+[`LICENSES/`](LICENSES/).
