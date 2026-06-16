@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: CeCILL-2.1 OR AGPL-3.0-or-later
+# Demonstration reproduction document for the nirs4all-papers publisher (alpha).
+# This is an ILLUSTRATIVE example built around a real deposited .n4a bundle and a
+# synthetic dataset; the authors, venue and DOI are placeholders.
+slug: 2026-pls-nirs-demo
+title: "Reproducible PLS calibration of protein content from near-infrared spectra"
+status: preprint
+year: 2026
+venue: "Demonstration bundle"
+doi: null
+license: "CC-BY-4.0"
+authors:
+  - name: "Gregory Beurier"
+    affiliation: "CIRAD"
+  - name: "nirs4all ecosystem"
+abstract: >
+  A worked, end-to-end example of the nirs4all reproduction-document publisher. A partial
+  least-squares model is calibrated on near-infrared spectra to predict protein content, using a
+  min–max scaling and standard-normal-variate preprocessing chain. The deposited .n4a bundle carries
+  the exact pipeline and fitted artifacts; this page re-derives the cross-validated scores live in the
+  browser from an included synthetic dataset, and lists the literature for every method used.
+keywords: [NIRS, PLS, preprocessing, reproducibility, chemometrics]
+bundle: model.n4a
+replay: replay.json
+dataset:
+  name: "Synthetic NIRS protein calibration set"
+  target: "protein (% w/w)"
+  n_samples: 120
+  n_features: 100
+  note: "Synthetic, deterministic (seed = 42). Included only to demonstrate the live replay; a real paper would reference a DOI-pinned nirs4all-datasets entry."
+protocol:
+  split: "5-fold cross-validation (out-of-fold predictions)"
+  cv: "5-fold"
+  metric: "RMSE / R² / RPD"
+  fold_strategy: "weighted_average"
+metrics:
+  - name: "RMSE"
+    value: 1.76
+    partition: "5-fold CV"
+  - name: "R²"
+    value: 0.69
+    partition: "5-fold CV"
+  - name: "RPD"
+    value: 1.81
+    partition: "5-fold CV"
+provenance:
+  source_repo: "nirs4all (examples/exports)"
+  source_commit: "D02_base_model"
+links:
+  - label: "nirs4all"
+    url: "https://nirs4all.org"

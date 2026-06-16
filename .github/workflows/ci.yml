@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install (with dev extras)
+        run: python -m pip install --upgrade pip ".[dev]"
+      - name: Lint
+        run: ruff check src tests
+      - name: Types
+        run: mypy src/nirs4all_papers
+      - name: Tests
+        run: pytest -q
+      - name: Build the demo site
+        run: n4a-papers build . --out site
+      - name: Validate emitted sidecars (CFF as YAML, RO-Crate as JSON)
+        run: |
+          python - <<'PY'
+          import json, glob
+          import yaml
+          for p in glob.glob("site/paper/*/CITATION.cff"):
+              yaml.safe_load(open(p, encoding="utf-8"))
+          for p in glob.glob("site/paper/*/ro-crate-metadata.json"):
+              d = json.load(open(p, encoding="utf-8"))
+              assert "@graph" in d, p
+          print("sidecars OK")
+          PY

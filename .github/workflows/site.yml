@@ -1,0 +1,43 @@
+name: Site (GitHub Pages)
+
+# Build the reproduction-document site from papers/*/ and deploy it to papers.nirs4all.org.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install the publisher
+        run: python -m pip install --upgrade pip .
+      - name: Build the reproduction-document site
+        run: n4a-papers build . --out site
+      - name: Pages chrome
+        run: touch site/.nojekyll
+        # To serve at papers.nirs4all.org, add a DNS record `papers CNAME gbeurier.github.io`
+        # (as datasets/formats already have), then set the custom domain in Settings → Pages
+        # or add: echo "papers.nirs4all.org" > site/CNAME
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

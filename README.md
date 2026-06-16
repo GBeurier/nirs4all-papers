@@ -57,6 +57,21 @@ papers/2026-aom-transfer/
 Do not commit generated caches, private review files, unpublished drafts, or
 data that cannot be redistributed.
 
+## Reproduction-document publisher
+
+`n4a-papers` turns a deposited `.n4a` bundle plus a short `paper.yaml` into a self-contained
+reproduction page — the exact pipeline, a bibliography for every method, the protocol and scores, a
+**live in-browser replay** that re-runs the pipeline, and deposit sidecars (`CITATION.cff`, BibTeX,
+RO-Crate). It builds a static site for [papers.nirs4all.org](https://papers.nirs4all.org).
+
+```bash
+pip install -e .
+n4a-papers build --out site     # papers/*/  →  ./site  (open site/index.html)
+```
+
+See [`docs/REPRODUCTION_PUBLISHER.md`](docs/REPRODUCTION_PUBLISHER.md) for the design and
+[`papers/README.md`](papers/README.md) for the per-paper bundle layout.
+
 ## License
 
 This repository — reproducibility **code** and accompanying **content** alike — is dual-licensed
