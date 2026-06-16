@@ -23,6 +23,45 @@ setTimeout(()=>{ fs.writeFileSync(process.argv[4], JSON.stringify({metrics:els['
 """
 
 
+_CSV_HARNESS = r"""
+const fs=require('fs');
+const payload=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+const csv=fs.readFileSync(process.argv[3],'utf8');
+global.window={__N4A_REPLAY__:payload,addEventListener(){}};
+global.document={readyState:'loading',getElementById(){return null;},addEventListener(){},createElementNS(){return{setAttribute(){},classList:{add(){}},style:{}};}};
+eval(fs.readFileSync(process.argv[4],'utf8'));
+const T=window.__N4A_TEST__;
+const p=T.parseCsv(csv, payload.dataset.target);
+const m=T.metrics(p.y, T.crossValidate(payload.plan, p.X, p.y));
+fs.writeFileSync(process.argv[5], JSON.stringify({rows:p.X.length, cols:p.X[0].length, rmse:m.rmse, n:m.n}));
+"""
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not available")
+def test_csv_upload_path(demo_view, tmp_path):
+    # Build a CSV (header = axis + 'target', rows = X + y) and re-run the pipeline on it via the hook.
+    r = demo_view.replay
+    axis, X, y = r["axis"], r["X"], r["y"]
+    lines = [",".join(str(a) for a in axis) + ",target"]
+    for row, t in zip(X, y, strict=True):
+        lines.append(",".join(str(v) for v in row) + f",{t}")
+    (tmp_path / "data.csv").write_text("\n".join(lines))
+    plan = assets.replay_plan(demo_view)
+    payload = {"plan": plan, "ioBase": "", "dataset": {"target": "target"}}
+    (tmp_path / "payload.json").write_text(json.dumps(payload))
+    (tmp_path / "engine.js").write_text(assets.REPLAY_JS)
+    (tmp_path / "harness.js").write_text(_CSV_HARNESS)
+    out = tmp_path / "out.json"
+    subprocess.run(
+        ["node", str(tmp_path / "harness.js"), str(tmp_path / "payload.json"), str(tmp_path / "data.csv"), str(tmp_path / "engine.js"), str(out)],
+        check=True, timeout=60,
+    )
+    res = json.loads(out.read_text())
+    assert res["rows"] == len(X) and res["cols"] == len(X[0])
+    assert res["n"] == len(y)
+    assert 1.0 < res["rmse"] < 2.5  # same data as the bundled demo -> same ballpark
+
+
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not available")
 def test_replay_engine_matches_reference(demo_view, tmp_path):
     plan = assets.replay_plan(demo_view)

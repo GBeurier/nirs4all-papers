@@ -58,6 +58,22 @@ def _write_paper_sidecars(view: PaperView, out: Path) -> None:
     (crate / "ro-crate-metadata.json").write_text(json.dumps(crate_meta, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+def _copy_io_wasm(io_wasm: str | Path, out: Path) -> str:
+    """Copy the nirs4all-formats + nirs4all-io WASM bundles into ``out/wasm/``; return the page-relative base.
+
+    Expects ``io_wasm`` to contain ``formats/`` and ``io/`` subdirectories of wasm-bindgen output.
+    The returned base (``../wasm``) is relative to a ``paper/<slug>.html`` page.
+    """
+    src = Path(io_wasm)
+    if not (src / "formats").is_dir():
+        raise ValueError(f"--io-wasm {src} has no formats/ subdirectory of nirs4all-formats WASM output")
+    dst = out / "wasm"
+    for sub in ("formats", "io"):
+        if (src / sub).is_dir():
+            shutil.copytree(src / sub, dst / sub)
+    return "../wasm"
+
+
 def _copy_brand(root: Path, out: Path) -> None:
     """Ship the site chrome (favicon, app icon, social card) under ``out/brand/``."""
     brand_src = root / "assets" / "brand"
@@ -71,8 +87,14 @@ def _copy_brand(root: Path, out: Path) -> None:
             shutil.copy2(src, brand_out / name)
 
 
-def build_site(root: str | Path, out: str | Path) -> Path:
-    """Build the reproduction-document site from ``root`` into ``out`` (regenerated wholesale)."""
+def build_site(root: str | Path, out: str | Path, io_wasm: str | Path | None = None) -> Path:
+    """Build the reproduction-document site from ``root`` into ``out`` (regenerated wholesale).
+
+    ``io_wasm`` (optional) is a directory holding ``formats/`` and ``io/`` nirs4all-formats /
+    nirs4all-io WASM bundles (e.g. ``nirs4all-web/studio-lite/src/engine/wasm``). When given, it is
+    copied into ``out/wasm/`` so the replay's "run on your own data" can decode vendor spectra files
+    in-browser; otherwise only the CSV upload path is available.
+    """
     from ..model import load_catalog
     from . import pages
 
@@ -95,12 +117,14 @@ def build_site(root: str | Path, out: str | Path) -> Path:
     (out / marker).write_text("nirs4all-papers build output — safe to delete.\n", encoding="utf-8")
     (out / "paper").mkdir()
 
+    io_base = _copy_io_wasm(io_wasm, out) if io_wasm else ""
+
     catalog = load_catalog(root)
 
     (out / "index.html").write_text(pages.render_index(catalog), encoding="utf-8")
     (out / "catalog.html").write_text(pages.render_catalog(catalog), encoding="utf-8")
     for view in catalog.papers:
-        (out / "paper" / f"{view.slug}.html").write_text(pages.render_paper(view), encoding="utf-8")
+        (out / "paper" / f"{view.slug}.html").write_text(pages.render_paper(view, io_base), encoding="utf-8")
         _write_paper_sidecars(view, out)
 
     _write_seo(out, catalog)

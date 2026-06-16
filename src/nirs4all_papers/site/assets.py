@@ -59,8 +59,16 @@ def replay_plan(view: PaperView) -> dict[str, Any]:
     return {"features": features, "yTransform": y_transform, "model": model, "cv": 5, "unsupported": unsupported}
 
 
-def replay_panel(view: PaperView, rel: str) -> str:
-    """The replay section: payload + controls + chart slots, or a graceful 'no dataset' note."""
+NIRS4ALL_WEB = "https://nirs4all.org"
+
+
+def replay_panel(view: PaperView, rel: str, io_wasm_base: str = "") -> str:
+    """The replay section: payload + controls + chart slots, or a graceful 'no dataset' note.
+
+    ``io_wasm_base`` (optional) points at a hosted ``nirs4all-formats`` + ``nirs4all-io`` WASM
+    directory; when set, "run on your own data" can decode vendor spectra files in-browser (like
+    nirs4all-web). A CSV upload always works without it.
+    """
     if not view.replay:
         return (
             '<section class="panel wide"><h2>Live replay<span class="h2-tag">in-browser</span></h2>'
@@ -73,6 +81,7 @@ def replay_panel(view: PaperView, rel: str) -> str:
     ds = view.replay
     payload = {
         "plan": plan,
+        "ioBase": io_wasm_base or "",
         "dataset": {
             "X": ds.get("X"),
             "y": ds.get("y"),
@@ -100,6 +109,30 @@ def replay_panel(view: PaperView, rel: str) -> str:
     syn = ds.get("synthetic")
     data_note = ds.get("note") or ("Synthetic demonstration dataset — no redistribution constraints." if syn else "")
 
+    cv = esc(str(plan.get("cv")))
+    vendor_hint = (
+        " — or vendor spectra files, decoded on demand with the nirs4all-formats + nirs4all-io WASM engine (the same one nirs4all-web uses)"
+        if io_wasm_base
+        else " — for vendor spectra files, open the full nirs4all-web app"
+    )
+    byod = f"""
+    <details class="byod">
+      <summary>&#128194; Run on your own dataset</summary>
+      <div class="byod-body">
+        <p class="dl-note">Re-run this exact pipeline on <strong>your</strong> data, entirely in your browser. Upload a
+        <strong>CSV</strong> (rows = samples; one column is the target, the rest are the spectrum){vendor_hint}.
+        Nothing is uploaded to a server.</p>
+        <div class="byod-drop" id="byod-drop">
+          <input type="file" id="byod-file" multiple accept="{".csv,.tsv,.txt" if not io_wasm_base else ""}">
+          <label for="byod-file">Choose file(s) or drop them here</label>
+        </div>
+        <div class="byod-row">
+          <button class="btn btn-outline" id="byod-reset">&#8635; Back to the included dataset</button>
+          <a class="dl-note" href="{NIRS4ALL_WEB}" target="_blank" rel="noopener">Full in-browser data app: nirs4all-web &rarr;</a>
+        </div>
+      </div>
+    </details>"""
+
     return f"""
 <section class="panel wide replay-wrap">
   <h2>Live replay — re-run this pipeline<span class="h2-tag">in your browser</span></h2>
@@ -107,18 +140,19 @@ def replay_panel(view: PaperView, rel: str) -> str:
     <div class="replay-controls">
       <button class="btn btn-primary" id="replay-run">&#9654; Run the pipeline</button>
       <span class="replay-status" id="replay-status">ready</span>
-      <span class="replay-engine" style="margin-left:auto"><i></i> pure-JS reference engine · NIPALS PLS · {esc(str(plan.get("cv")))}-fold OOF</span>
+      <span class="replay-engine" style="margin-left:auto"><i></i> pure-JS reference engine · NIPALS PLS · {cv}-fold OOF</span>
     </div>
+    <div class="replay-source" id="replay-source"></div>
     <div class="replay-metrics" id="replay-metrics"></div>
     <div class="replay-grid">
       <div class="replay-chart chart" id="replay-parity" tabindex="0" role="button" aria-label="parity plot"></div>
       <div class="replay-chart chart" id="replay-resid" tabindex="0" role="button" aria-label="residual plot"></div>
     </div>
-    <p class="replay-note">Re-runs the published preprocessing + model on the included dataset under
-    leakage-safe {esc(str(plan.get("cv")))}-fold cross-validation, recomputing out-of-fold predictions and scores entirely in
-    your browser. {esc(data_note)}</p>
+    {byod}
+    <p class="replay-note">Re-runs the published preprocessing + model on the dataset under leakage-safe
+    {cv}-fold cross-validation, recomputing out-of-fold predictions and scores entirely in your browser. {esc(data_note)}</p>
     <p class="replay-note"><strong>Approximate.</strong> This is an independent pure-JS reference engine
-    (NIPALS PLS) with a deterministic {esc(str(plan.get("cv")))}-fold split — it demonstrates the pipeline, but does not reproduce
+    (NIPALS PLS) with a deterministic {cv}-fold split — it demonstrates the pipeline, but does not reproduce
     the deposited run's exact PLS implementation or fold strategy, so these scores are close to, not
     identical to, the published values above. The exact pipeline is reproducible from the
     <code>.n4a</code> with the commands below.</p>
@@ -335,13 +369,12 @@ REPLAY_JS = r"""
 
   function setStatus(cls, text) { var el = document.getElementById("replay-status"); if (el) { el.className = "replay-status " + cls; el.textContent = text; } }
 
-  function run() {
-    var ds = DATA.dataset, plan = DATA.plan;
+  function renderResult(X, y, target, sourceLabel) {
+    var plan = DATA.plan;
     if (!plan.model) { setStatus("err", "no model in pipeline"); return; }
     setStatus("busy", "running " + (plan.cv || 5) + "-fold cross-validation…");
     setTimeout(function () {
       try {
-        var X = ds.X, y = ds.y;
         var pred = crossValidate(plan, X, y);
         var m = metrics(y, pred);
         if (!m.n) { setStatus("err", "dataset too small to cross-validate (need at least " + ((plan.cv || 5) + 2) + " samples)"); return; }
@@ -350,16 +383,101 @@ REPLAY_JS = r"""
         document.getElementById("replay-metrics").innerHTML =
           pill(fmt(m.rmse), "RMSE (cv)") + pill(r2s, "R² (cv)") + pill(rpds, "RPD") +
           pill(m.n, "samples") + pill((plan.model.n_components), "components");
-        document.getElementById("replay-parity").innerHTML = scatterSVG(y, pred, ds.target);
-        document.getElementById("replay-resid").innerHTML = residSVG(y, pred, ds.target);
+        document.getElementById("replay-parity").innerHTML = scatterSVG(y, pred, target);
+        document.getElementById("replay-resid").innerHTML = residSVG(y, pred, target);
+        var cap = document.getElementById("replay-source"); if (cap) cap.textContent = sourceLabel || "";
         setStatus("done", "done · recomputed in your browser");
       } catch (e) { setStatus("err", "replay error: " + e.message); }
     }, 30);
   }
+  function runDemo() { var ds = DATA.dataset; renderResult(ds.X, ds.y, ds.target, "Dataset: " + (ds.name || "included")); }
 
-  var btn = document.getElementById("replay-run");
-  if (btn) btn.addEventListener("click", run);
-  if (document.readyState === "complete" || document.readyState === "interactive") setTimeout(run, 120);
-  else window.addEventListener("DOMContentLoaded", function () { setTimeout(run, 120); });
+  // ----- CSV fast-path (delimiter / decimal / header detection, like nirs4all-web) -----
+  function detectDelim(text) { var line = (text.split(/\r?\n/).find(function (l) { return l.trim().length; }) || ""); var best = ",", bc = 0;
+    [";", ",", "\t"].forEach(function (d) { var c = line.split(d).length; if (c > bc) { bc = c; best = d; } });
+    if (bc <= 1 && line.trim().split(/\s+/).length > 1) return " "; return best; }
+  function splitLine(line, d) { return d === " " ? line.trim().split(/\s+/) : line.split(d).map(function (c) { return c.trim(); }); }
+  function toNum(c, comma) { if (c == null || c === "") return NaN; var v = Number(comma ? String(c).replace(",", ".") : c); return isNaN(v) ? NaN : v; }
+  function parseCsv(text, targetName) {
+    var d = detectDelim(text), comma = d !== ",";
+    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim().length; });
+    if (lines.length < 4) throw new Error("need at least a few sample rows");
+    var first = splitLine(lines[0], d);
+    var firstNum = first.every(function (c) { return !isNaN(toNum(c, comma)); });
+    var secondNum = splitLine(lines[1], d).some(function (c) { return !isNaN(toNum(c, comma)); });
+    var hasHeader = !firstNum && secondNum;
+    var header = hasHeader ? first : first.map(function (_, i) { return String(i); });
+    var body = hasHeader ? lines.slice(1) : lines;
+    var rows = body.map(function (l) { return splitLine(l, d).map(function (c) { return toNum(c, comma); }); });
+    var nc = header.length, tcol = nc - 1;
+    if (hasHeader && targetName) { var tn = String(targetName).toLowerCase();
+      for (var c = 0; c < nc; c++) { if (String(header[c]).toLowerCase().indexOf(tn) >= 0) { tcol = c; break; } } }
+    var feat = []; for (var c2 = 0; c2 < nc; c2++) { if (c2 === tcol) continue;
+      if (rows.every(function (r) { return isFinite(r[c2]); })) feat.push(c2); }
+    if (feat.length < 2) throw new Error("found fewer than 2 numeric spectrum columns");
+    var X = rows.map(function (r) { return feat.map(function (c) { return r[c]; }); });
+    var y = rows.map(function (r) { return r[tcol]; });
+    if (y.some(function (v) { return !isFinite(v); })) throw new Error("target column '" + header[tcol] + "' has non-numeric values");
+    var axis = feat.map(function (c, i) { var n = Number(header[c]); return isFinite(n) ? n : i; });
+    return { X: X, y: y, axis: axis, target: header[tcol] };
+  }
+  function readText(file) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = function () { rej(new Error("read failed")); }; r.readAsText(file); }); }
+  function readBytes(file) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res({ name: file.name, bytes: new Uint8Array(r.result) }); }; r.onerror = function () { rej(new Error("read failed")); }; r.readAsArrayBuffer(file); }); }
+
+  // ----- optional vendor decode via nirs4all-formats (+ nirs4all-io) WASM, loaded on demand -----
+  function loadVendor(files, base) {
+    return Promise.all(files.map(readBytes)).then(function (loaded) {
+      var url = base.replace(/\/$/, "") + "/formats/nirs4all_formats_wasm.js";
+      return import(url).then(function (fmt) { return Promise.resolve(fmt.default()).then(function () { return fmt; }); }).then(function (fmt) {
+        var X = [], y = [], axis = null, missing = 0;
+        loaded.forEach(function (f) {
+          var recs; try { recs = fmt.openBytes(f.name, f.bytes); } catch (e) { return; }
+          (recs || []).forEach(function (rec) {
+            var sigs = rec.signals || {}; var k = Object.keys(sigs)[0]; if (!k) return;
+            var sig = sigs[k]; if (!sig || !sig.values) return;
+            X.push(sig.values.slice());
+            if (!axis && sig.axis && sig.axis.values) axis = sig.axis.values.slice();
+            var t = rec.targets ? rec.targets[Object.keys(rec.targets)[0]] : undefined;
+            if (typeof t === "number") y.push(t); else missing++;
+          });
+        });
+        if (!X.length) throw new Error("no spectra decoded from these files");
+        if (missing || y.length !== X.length) throw new Error("decoded " + X.length + " spectra but no numeric target in the files — add a CSV with a target column to score");
+        return { X: X, y: y, axis: axis || X[0].map(function (_, i) { return i; }), target: DATA.dataset.target };
+      });
+    });
+  }
+
+  function handleFiles(fileList) {
+    var files = [].slice.call(fileList); if (!files.length) return;
+    var csv = null; for (var i = 0; i < files.length; i++) { if (/\.(csv|tsv|txt)$/i.test(files[i].name)) { csv = files[i]; break; } }
+    if (csv) {
+      setStatus("busy", "parsing " + csv.name + "…");
+      readText(csv).then(function (text) { var p = parseCsv(text, DATA.dataset.target);
+        renderResult(p.X, p.y, p.target, "Your data: " + csv.name + " (" + p.X.length + "×" + p.X[0].length + ")"); })
+        .catch(function (e) { setStatus("err", "CSV: " + e.message); });
+      return;
+    }
+    if (!DATA.ioBase) { setStatus("err", "vendor formats need the optional nirs4all WASM engine — upload a CSV, or open the full nirs4all-web app"); return; }
+    setStatus("busy", "decoding " + files.length + " file(s) with nirs4all-io…");
+    loadVendor(files, DATA.ioBase).then(function (p) { renderResult(p.X, p.y, p.target, "Your data: " + files.length + " file(s), " + p.X.length + "×" + p.X[0].length); })
+      .catch(function (e) { setStatus("err", "vendor: " + e.message); });
+  }
+
+  var runBtn = document.getElementById("replay-run"); if (runBtn) runBtn.addEventListener("click", runDemo);
+  var resetBtn = document.getElementById("byod-reset"); if (resetBtn) resetBtn.addEventListener("click", runDemo);
+  var fileInput = document.getElementById("byod-file"); if (fileInput) fileInput.addEventListener("change", function () { handleFiles(fileInput.files); });
+  var drop = document.getElementById("byod-drop");
+  if (drop) {
+    ["dragover", "dragenter"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+    ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+    drop.addEventListener("drop", function (e) { if (e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files); });
+  }
+
+  // test hook (used by the Node smoke test; harmless in the browser)
+  window.__N4A_TEST__ = { parseCsv: parseCsv, crossValidate: crossValidate, metrics: metrics };
+
+  if (document.readyState === "complete" || document.readyState === "interactive") setTimeout(runDemo, 120);
+  else window.addEventListener("DOMContentLoaded", function () { setTimeout(runDemo, 120); });
 })();
 """
