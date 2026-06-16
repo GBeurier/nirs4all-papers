@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nirs4all-papers"
-version = "0.1.0"
+version = "0.2.0"
 description = "Reproduction-document publisher: turn a deposited nirs4all .n4a into a methods + bibliography report and a live in-browser pipeline replay."
 readme = "README.md"
 requires-python = ">=3.10"
