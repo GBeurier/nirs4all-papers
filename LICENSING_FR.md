@@ -39,14 +39,17 @@ SaaS** sans publier votre propre code source — une **licence commerciale** est
 dans [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md), et les textes des familles de
 licences concernées sont regroupés dans [`LICENSES/`](LICENSES/).
 
-## 4. Licence du contenu
+## 4. Manuscrits déposés et jeux de données
 
-La documentation, les manuscrits, figures, présentations, pages web et métadonnées de
-jeux de données de ce dépôt (par opposition au code source) sont sous **Creative Commons
-Attribution 4.0 International (CC-BY-4.0)** — voir
-[`LICENSES/CC-BY-4.0.txt`](LICENSES/CC-BY-4.0.txt). Lorsqu'un jeu de données ou un actif
-tiers porte sa propre licence ou ses conditions DOI, ces conditions amont prévalent pour
-cet actif.
+La double licence du §1 couvre tout ce qui, dans ce dépôt, est produit par le projet —
+le code source comme le contenu associé (notes, figures, scripts). Deux exceptions
+conservent leurs propres conditions :
+
+- les **manuscrits déposés** — PDF d'articles publiés ou acceptés — restent soumis au
+  **copyright et aux conditions de l'éditeur** et ne sont rediffusés ici que dans la mesure
+  permise par ces conditions ;
+- les **jeux de données et actifs tiers** portant leur propre licence ou conditions DOI
+  sont régis par ces conditions amont.
 
 ## En-tête SPDX recommandé dans les fichiers source
 

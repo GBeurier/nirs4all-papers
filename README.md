@@ -59,8 +59,8 @@ data that cannot be redistributed.
 
 ## License
 
-Reproducibility **code** in this repository is dual-licensed open-source —
-**`CeCILL-2.1 OR AGPL-3.0-or-later`** — with an optional **commercial license** (for any commercial use,
-contact <nirs4all-admin@cirad.fr>). Repository **content** (notes, figures) is **CC-BY-4.0**; deposited
-**manuscripts** carry their publisher's terms where applicable. See [`LICENSING.md`](LICENSING.md) and
-[`LICENSES/`](LICENSES/).
+This repository — reproducibility **code** and accompanying **content** alike — is dual-licensed
+open-source — **`CeCILL-2.1 OR AGPL-3.0-or-later`** — with an optional **commercial license** (for any
+commercial use, contact <nirs4all-admin@cirad.fr>), matching the rest of the nirs4all ecosystem.
+Deposited **manuscripts** carry their publisher's terms, and datasets / third-party assets keep their
+upstream terms. See [`LICENSING.md`](LICENSING.md) and [`LICENSES/`](LICENSES/).
