@@ -30,11 +30,10 @@ jobs:
         run: python -m pip install --upgrade pip .
       - name: Build the reproduction-document site
         run: n4a-papers build . --out site
-      - name: Pages chrome
-        run: touch site/.nojekyll
-        # To serve at papers.nirs4all.org, add a DNS record `papers CNAME gbeurier.github.io`
-        # (as datasets/formats already have), then set the custom domain in Settings → Pages
-        # or add: echo "papers.nirs4all.org" > site/CNAME
+      - name: Pages chrome (custom domain + Jekyll off)
+        run: |
+          echo "papers.nirs4all.org" > site/CNAME
+          touch site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

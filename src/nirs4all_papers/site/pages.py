@@ -383,7 +383,7 @@ def _scholarly_head(view: PaperView) -> str:
     return "\n".join(tags) + "\n" + script
 
 
-def render_paper(view: PaperView) -> str:
+def render_paper(view: PaperView, io_wasm_base: str = "") -> str:
     rel = "../"
     keywords = "".join(f'<span class="kw">{esc(k)}</span>' for k in view.keywords)
     kw_html = f'<div class="paper-kw">{keywords}</div>' if keywords else ""
@@ -418,7 +418,7 @@ def render_paper(view: PaperView) -> str:
     entries = [
         ("pipeline", "Pipeline", pipeline_panel),
         ("results", "Protocol &amp; results", results_grid),
-        ("replay", "Live replay", _inject("replay", assets.replay_panel(view, rel))),
+        ("replay", "Live replay", _inject("replay", assets.replay_panel(view, rel, io_wasm_base))),
         ("methods", "Methods", _inject("methods", _methods_narrative(view))),
         ("bibliography", "Bibliography", bib_panel),
         ("license", "Licensing", _inject("license", _license_panel(view))),

@@ -80,7 +80,10 @@ site/
 4. **Protocol** — split, CV folds, fold strategy + weights, scoring metric.
 5. **Results** — metrics table + parity (predicted vs measured) + residuals plots.
 6. **Live replay** — re-runs the published pipeline on the included dataset *in the browser*,
-   recomputing parity/residuals and RMSE/R²; honest about being a pure-JS reference engine.
+   recomputing parity/residuals and RMSE/R²; honest about being a pure-JS reference engine. Also
+   offers **"run on your own data"**: a CSV upload (pure-JS fast-path, works everywhere) or, when the
+   site is built with `--io-wasm`, vendor spectra files decoded on demand via the `nirs4all-formats`
+   + `nirs4all-io` WASM — the same engine `nirs4all-web` uses. Nothing leaves the browser.
 7. **Methods narrative** — auto-generated prose, one paragraph per step, each cited.
 8. **Bibliography** — numbered reference list with DOIs/links, only the methods actually used.
 9. **Provenance & reproduction** — `pipeline_uid`, per-file SHA-256 fingerprints, bundle inventory,

@@ -22,9 +22,11 @@ def _cmd_build(args: argparse.Namespace) -> int:
     if not (root / "papers").is_dir():
         print(f"error: no papers/ directory under {root.resolve()} — is this the repository root?", file=sys.stderr)
         return 1
-    out = build_site(root, args.out)
+    out = build_site(root, args.out, io_wasm=args.io_wasm)
     papers = list((out / "paper").glob("*.html"))
     print(f"Built {len(papers)} paper page(s) → {out}")
+    if args.io_wasm:
+        print("  + nirs4all-formats/io WASM bundled → 'run on your own data' accepts vendor files")
     print(f"  open {out / 'index.html'}")
     return 0
 
@@ -66,6 +68,13 @@ def main(argv: list[str] | None = None) -> int:
     p_build = sub.add_parser("build", help="build the static site from papers/*/")
     p_build.add_argument("root", nargs="?", default=".", help="repository root (default: .)")
     p_build.add_argument("--out", default="site", help="output directory (default: site)")
+    p_build.add_argument(
+        "--io-wasm",
+        default=None,
+        metavar="DIR",
+        help="optional nirs4all-formats/io WASM dir (with formats/ + io/) to bundle for vendor-file replay, "
+        "e.g. ../nirs4all-web/studio-lite/src/engine/wasm",
+    )
     p_build.set_defaults(func=_cmd_build)
 
     p_new = sub.add_parser("new", help="scaffold a new papers/<slug>/ bundle")

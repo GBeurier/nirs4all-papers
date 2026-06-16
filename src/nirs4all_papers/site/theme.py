@@ -435,6 +435,17 @@ _PAPERS_CSS = """
 .replay-note { font-size: .82rem; color: var(--text-3); margin-top: 14px; line-height: 1.6; }
 .replay-engine { display:inline-flex; align-items:center; gap:6px; font-size:.72rem; font-family:var(--mono); color:var(--text-3); }
 .replay-engine i { width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; }
+.replay-source { font-size:.78rem; color:var(--text-3); font-family:var(--mono); margin:2px 0 10px; min-height:1em; }
+
+/* Bring-your-own-data */
+.byod { margin: 16px 0 4px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-alt); padding: 2px 16px; }
+.byod summary { cursor: pointer; font-family: var(--display); font-weight: 600; font-size: .92rem; padding: 12px 0; display: flex; align-items: center; gap: 8px; }
+.byod-body { padding: 4px 0 16px; }
+.byod-drop { margin: 12px 0; border: 1.5px dashed var(--border); border-radius: 10px; background: #fff; padding: 18px; text-align: center; transition: border-color .15s, background .15s; }
+.byod-drop.over { border-color: var(--teal); background: rgba(13,148,136,.05); }
+.byod-drop label { display: block; color: var(--text-2); font-size: .85rem; margin-top: 8px; cursor: pointer; }
+.byod-drop input[type=file] { font-size: .82rem; color: var(--text-2); }
+.byod-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
 
 /* Copy-to-clipboard button (on code blocks) */
 .copy-wrap { position: relative; }
