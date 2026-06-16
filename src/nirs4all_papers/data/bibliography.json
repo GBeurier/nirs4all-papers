@@ -1,0 +1,290 @@
+{
+  "_meta": {
+    "about": "Curated method->citation seed for the nirs4all reproduction-document publisher.",
+    "source": "Distilled from nirs4all-methods/docs/_extras/methods_bibliography.py (BIBLIOGRAPHY) and build_methods.py (OPERATOR_BIB).",
+    "note": "Citation strings are authoritative; DOIs/URLs are present only where confidently known and should be enriched over time (e.g. via Crossref). A method without an entry renders without a citation and is flagged.",
+    "license": "CeCILL-2.1 OR AGPL-3.0-or-later"
+  },
+  "references": {
+    "snv": {
+      "label": "Standard Normal Variate (SNV)",
+      "authors": "Barnes, R. J.; Dhanoa, M. S.; Lister, S. J.",
+      "year": 1989,
+      "title": "Standard Normal Variate Transformation and De-trending of Near-Infrared Diffuse Reflectance Spectra",
+      "venue": "Applied Spectroscopy 43(5), 772–777",
+      "doi": "10.1366/0003702894202201",
+      "url": null,
+      "principle": "Per-spectrum centring and scaling that removes multiplicative scatter and baseline offset row by row."
+    },
+    "rnv": {
+      "label": "Robust Normal Variate (RNV)",
+      "authors": "Guo, Q.; Wu, W.; Massart, D. L.",
+      "year": 1999,
+      "title": "The robust normal variate transform for pattern recognition with near-infrared data",
+      "venue": "Analytica Chimica Acta 382(1–2), 87–103",
+      "doi": "10.1016/S0003-2670(98)00737-5",
+      "url": null,
+      "principle": "A percentile-based variant of SNV that is resistant to outlying intensities."
+    },
+    "msc": {
+      "label": "Multiplicative Scatter Correction (MSC)",
+      "authors": "Geladi, P.; MacDougall, D.; Martens, H.",
+      "year": 1985,
+      "title": "Linearization and Scatter-Correction for Near-Infrared Reflectance Spectra of Meat",
+      "venue": "Applied Spectroscopy 39(3), 491–500",
+      "doi": "10.1366/0003702854248656",
+      "url": null,
+      "principle": "Regresses each spectrum against a reference (mean) spectrum and corrects its slope/offset to remove scatter."
+    },
+    "emsc": {
+      "label": "Extended Multiplicative Scatter Correction (EMSC)",
+      "authors": "Martens, H.; Stark, E.",
+      "year": 1991,
+      "title": "Extended multiplicative signal correction and spectral interference subtraction",
+      "venue": "Journal of Pharmaceutical and Biomedical Analysis 9(8), 625–635",
+      "doi": "10.1016/0731-7085(91)80188-F",
+      "url": null,
+      "principle": "MSC augmented with polynomial and chemical-interference terms in the correction model."
+    },
+    "savgol": {
+      "label": "Savitzky–Golay smoothing / derivative",
+      "authors": "Savitzky, A.; Golay, M. J. E.",
+      "year": 1964,
+      "title": "Smoothing and Differentiation of Data by Simplified Least Squares Procedures",
+      "venue": "Analytical Chemistry 36(8), 1627–1639",
+      "doi": "10.1021/ac60214a047",
+      "url": null,
+      "principle": "Local least-squares polynomial fitting in a moving window, giving smoothed values or analytic derivatives."
+    },
+    "first_derivative": {
+      "label": "First derivative",
+      "authors": "Norris, K. H.; Williams, P. C.",
+      "year": 1984,
+      "title": "Optimization of mathematical treatments of raw near-infrared signal in the measurement of protein in hard red spring wheat",
+      "venue": "Cereal Chemistry 61(2), 158–165",
+      "doi": null,
+      "url": null,
+      "principle": "Finite-difference / gap first derivative that removes additive baseline and sharpens overlapping bands."
+    },
+    "second_derivative": {
+      "label": "Second derivative",
+      "authors": "Norris, K. H.; Williams, P. C.",
+      "year": 1984,
+      "title": "Optimization of mathematical treatments of raw near-infrared signal in the measurement of protein in hard red spring wheat",
+      "venue": "Cereal Chemistry 61(2), 158–165",
+      "doi": null,
+      "url": null,
+      "principle": "Second-order finite-difference derivative that removes both additive and linear-multiplicative baselines."
+    },
+    "detrend": {
+      "label": "De-trending",
+      "authors": "Barnes, R. J.; Dhanoa, M. S.; Lister, S. J.",
+      "year": 1989,
+      "title": "Standard Normal Variate Transformation and De-trending of Near-Infrared Diffuse Reflectance Spectra",
+      "venue": "Applied Spectroscopy 43(5), 772–777",
+      "doi": "10.1366/0003702894202201",
+      "url": null,
+      "principle": "Removes a fitted low-order polynomial baseline from each spectrum."
+    },
+    "gaussian_filter": {
+      "label": "Gaussian smoothing",
+      "authors": null,
+      "year": null,
+      "title": "Gaussian-kernel convolution smoothing",
+      "venue": "Classical signal processing",
+      "doi": null,
+      "url": null,
+      "principle": "Convolution with a Gaussian kernel to suppress high-frequency noise."
+    },
+    "minmax": {
+      "label": "Min–max scaling",
+      "authors": "Pedregosa, F. et al.",
+      "year": 2011,
+      "title": "Scikit-learn: Machine Learning in Python (implementation reference)",
+      "venue": "Journal of Machine Learning Research 12, 2825–2830",
+      "doi": null,
+      "url": "https://jmlr.org/papers/v12/pedregosa11a.html",
+      "principle": "Affine rescaling of each feature to a fixed range (default [0, 1]); a standard feature-conditioning step."
+    },
+    "standard_scaler": {
+      "label": "Standardisation (z-score)",
+      "authors": "Pedregosa, F. et al.",
+      "year": 2011,
+      "title": "Scikit-learn: Machine Learning in Python (implementation reference)",
+      "venue": "Journal of Machine Learning Research 12, 2825–2830",
+      "doi": null,
+      "url": "https://jmlr.org/papers/v12/pedregosa11a.html",
+      "principle": "Centres to zero mean and scales to unit variance; applied to features or to the regression target."
+    },
+    "pls": {
+      "label": "Partial Least Squares regression (PLS)",
+      "authors": "Wold, S.; Sjöström, M.; Eriksson, L.",
+      "year": 2001,
+      "title": "PLS-regression: a basic tool of chemometrics",
+      "venue": "Chemometrics and Intelligent Laboratory Systems 58(2), 109–130",
+      "doi": "10.1016/S0169-7439(01)00155-1",
+      "url": null,
+      "principle": "Projects spectra onto a small number of latent variables that maximise covariance with the target, then regresses."
+    },
+    "simpls": {
+      "label": "SIMPLS",
+      "authors": "de Jong, S.",
+      "year": 1993,
+      "title": "SIMPLS: an alternative approach to partial least squares regression",
+      "venue": "Chemometrics and Intelligent Laboratory Systems 18(3), 251–263",
+      "doi": "10.1016/0169-7439(93)85002-X",
+      "url": null,
+      "principle": "Computes PLS factors directly from the covariance matrix without deflating the data block."
+    },
+    "ikpls": {
+      "label": "Improved Kernel PLS (IKPLS)",
+      "authors": "Dayal, B. S.; MacGregor, J. F.",
+      "year": 1997,
+      "title": "Improved PLS algorithms",
+      "venue": "Journal of Chemometrics 11(1), 73–85",
+      "doi": "10.1002/(SICI)1099-128X(199701)11:1<73::AID-CEM435>3.0.CO;2-#",
+      "url": null,
+      "principle": "Kernel-form PLS algorithms that are fast when samples greatly outnumber or are outnumbered by features."
+    },
+    "opls": {
+      "label": "Orthogonal PLS (OPLS)",
+      "authors": "Trygg, J.; Wold, S.",
+      "year": 2002,
+      "title": "Orthogonal projections to latent structures (O-PLS)",
+      "venue": "Journal of Chemometrics 16(3), 119–128",
+      "doi": "10.1002/cem.695",
+      "url": null,
+      "principle": "Separates target-correlated variation from orthogonal (uncorrelated) variation before the PLS regression."
+    },
+    "mbpls": {
+      "label": "Multi-block PLS (MB-PLS)",
+      "authors": "Westerhuis, J. A.; Kourti, T.; MacGregor, J. F.",
+      "year": 1998,
+      "title": "Analysis of multiblock and hierarchical PCA and PLS models",
+      "venue": "Journal of Chemometrics 12(5), 301–321",
+      "doi": "10.1002/(SICI)1099-128X(199809/10)12:5<301::AID-CEM515>3.0.CO;2-S",
+      "url": null,
+      "principle": "Fits PLS jointly over several data blocks, exposing per-block contributions."
+    },
+    "kernel_pls_rbf": {
+      "label": "Kernel PLS (RBF)",
+      "authors": "Rosipal, R.; Trejo, L. J.",
+      "year": 2001,
+      "title": "Kernel partial least squares regression in reproducing kernel Hilbert space",
+      "venue": "Journal of Machine Learning Research 2, 97–123",
+      "doi": null,
+      "url": "https://www.jmlr.org/papers/v2/rosipal01a.html",
+      "principle": "Non-linear PLS via the kernel trick in a reproducing-kernel Hilbert space."
+    },
+    "pcr": {
+      "label": "Principal Component Regression (PCR)",
+      "authors": "Massy, W. F.",
+      "year": 1965,
+      "title": "Principal Components Regression in Exploratory Statistical Research",
+      "venue": "Journal of the American Statistical Association 60(309), 234–256",
+      "doi": "10.1080/01621459.1965.10480787",
+      "url": null,
+      "principle": "Regresses the target on the leading principal components of the spectra."
+    },
+    "pca": {
+      "label": "Principal Component Analysis (PCA)",
+      "authors": "Jolliffe, I. T.",
+      "year": 2002,
+      "title": "Principal Component Analysis (2nd ed.)",
+      "venue": "Springer Series in Statistics",
+      "doi": "10.1007/b98835",
+      "url": null,
+      "principle": "Orthogonal projection onto directions of maximum variance; used here as a dimensionality-reduction transform."
+    },
+    "ridge": {
+      "label": "Ridge regression",
+      "authors": "Hoerl, A. E.; Kennard, R. W.",
+      "year": 1970,
+      "title": "Ridge Regression: Biased Estimation for Nonorthogonal Problems",
+      "venue": "Technometrics 12(1), 55–67",
+      "doi": "10.1080/00401706.1970.10488634",
+      "url": null,
+      "principle": "L2-penalised linear regression that stabilises estimation on collinear spectral features."
+    },
+    "kennard_stone": {
+      "label": "Kennard–Stone split",
+      "authors": "Kennard, R. W.; Stone, L. A.",
+      "year": 1969,
+      "title": "Computer Aided Design of Experiments",
+      "venue": "Technometrics 11(1), 137–148",
+      "doi": "10.1080/00401706.1969.10490666",
+      "url": null,
+      "principle": "Greedily selects a calibration set that uniformly covers the feature space, leaving a representative test set."
+    },
+    "spxy": {
+      "label": "SPXY split",
+      "authors": "Galvão, R. K. H. et al.",
+      "year": 2005,
+      "title": "A method for calibration and validation subset partitioning",
+      "venue": "Talanta 67(4), 736–740",
+      "doi": "10.1016/j.talanta.2005.03.025",
+      "url": null,
+      "principle": "Kennard–Stone-style partitioning using joint distances in both X (spectra) and Y (target)."
+    },
+    "vip_select": {
+      "label": "Variable Importance in Projection (VIP)",
+      "authors": "Wold, S.; Sjöström, M.; Eriksson, L.",
+      "year": 2001,
+      "title": "PLS-regression: a basic tool of chemometrics",
+      "venue": "Chemometrics and Intelligent Laboratory Systems 58(2), 109–130",
+      "doi": "10.1016/S0169-7439(01)00155-1",
+      "url": null,
+      "principle": "Ranks wavelengths by their contribution to the PLS projection for variable selection."
+    },
+    "cars_select": {
+      "label": "Competitive Adaptive Reweighted Sampling (CARS)",
+      "authors": "Li, H. et al.",
+      "year": 2009,
+      "title": "Key wavelengths screening using competitive adaptive reweighted sampling method for multivariate calibration",
+      "venue": "Analytica Chimica Acta 648(1), 77–84",
+      "doi": "10.1016/j.aca.2009.06.046",
+      "url": null,
+      "principle": "Iteratively reweights and resamples wavelengths to retain the most informative subset."
+    },
+    "ipls_select": {
+      "label": "Interval PLS (iPLS)",
+      "authors": "Nørgaard, L. et al.",
+      "year": 2000,
+      "title": "Interval Partial Least-Squares Regression (iPLS): A Comparative Chemometric Study with an Example from Near-Infrared Spectroscopy",
+      "venue": "Applied Spectroscopy 54(3), 413–419",
+      "doi": "10.1366/0003702001949500",
+      "url": null,
+      "principle": "Splits the spectrum into intervals and selects those giving the best local PLS model."
+    },
+    "pds": {
+      "label": "Piecewise Direct Standardisation (PDS)",
+      "authors": "Wang, Y.; Veltkamp, D. J.; Kowalski, B. R.",
+      "year": 1991,
+      "title": "Multivariate instrument standardization",
+      "venue": "Analytical Chemistry 63(23), 2750–2756",
+      "doi": "10.1021/ac00023a016",
+      "url": null,
+      "principle": "Calibration-transfer map between instruments built from local windows of standard spectra."
+    },
+    "mixup": {
+      "label": "mixup augmentation",
+      "authors": "Zhang, H.; Cisse, M.; Dauphin, Y. N.; Lopez-Paz, D.",
+      "year": 2018,
+      "title": "mixup: Beyond Empirical Risk Minimization",
+      "venue": "International Conference on Learning Representations (ICLR) 2018",
+      "doi": null,
+      "url": "https://arxiv.org/abs/1710.09412",
+      "principle": "Trains on convex combinations of sample/label pairs to regularise the model."
+    },
+    "aom_pls": {
+      "label": "AOM-PLS / POP-PLS",
+      "authors": "Beurier, G.; Reiter, R.; Noûs, C.; Rouan, L.; Cornet, D.",
+      "year": 2026,
+      "title": "Reframing preprocessing selection as model-internal calibration in NIRS",
+      "venue": "arXiv preprint",
+      "doi": null,
+      "url": "https://arxiv.org/abs/2605.13587",
+      "principle": "Treats the choice of preprocessing as part of the model's internal calibration rather than a fixed pre-step."
+    }
+  }
+}
