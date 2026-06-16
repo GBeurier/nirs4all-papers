@@ -15,3 +15,10 @@ dist/
 *.synctex.gz
 *.toc
 *.zip
+
+# reproduction-document publisher
+/site/
+*.egg-info/
+src/*.egg-info/
+.venv/
+node_modules/

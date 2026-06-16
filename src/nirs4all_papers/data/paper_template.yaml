@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: CeCILL-2.1 OR AGPL-3.0-or-later
+# paper.yaml — metadata for one reproduction document.
+# Drop this in papers/<slug>/ next to your deposited model.n4a (and an optional replay.json),
+# fill it in, then run:  n4a-papers build --out site
+#
+# The .n4a bundle supplies the pipeline + fingerprints; this file supplies everything the bundle
+# cannot carry (title, authors, DOI, scores, protocol, dataset reference).
+
+slug:                     # optional; defaults to the directory name
+title: ""                 # paper title (required)
+status: preprint          # preprint | accepted | published | deposited
+year:                     # publication year
+date:                     # optional ISO release date (YYYY-MM-DD); used for CFF date-released
+version:                  # optional artifact/release version (CFF version)
+venue: ""                 # journal / conference
+doi:                      # paper DOI, e.g. 10.1234/abcd  (omit if none yet)
+license: ""               # manuscript license (publisher terms), e.g. CC-BY-4.0
+authors:
+  - name: ""
+    orcid:                # e.g. 0000-0002-1825-0097 (optional)
+    affiliation: ""       # optional
+abstract: >
+  A short abstract.
+
+keywords: []
+
+bundle: model.n4a         # path to the deposited .n4a (relative to this directory)
+replay: replay.json       # optional small {axis, X, y, target} dataset for the live in-browser replay
+
+dataset:
+  name: ""                # dataset name
+  doi:                    # dataset DOI (cite the data!)
+  license:                # dataset license, if known
+  target: ""              # what the model predicts
+  n_samples:
+  n_features:
+  note: ""
+
+protocol:
+  split: ""               # e.g. "Kennard-Stone 75/25"
+  cv: ""                  # e.g. "5-fold"
+  metric: ""              # e.g. "RMSEP"
+  fold_strategy:          # optional; defaults to the bundle's manifest value
+
+metrics:                  # the published scores (rendered in the Results panel)
+  - name: "RMSE"
+    value:
+    partition: "test"
+
+provenance:
+  source_repo: ""         # private draft / lab repo this was released from
+  source_commit: ""       # commit or tag for provenance
+links:
+  - label: ""
+    url: ""

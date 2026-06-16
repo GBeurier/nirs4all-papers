@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: CeCILL-2.1 OR AGPL-3.0-or-later
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nirs4all-papers"
+version = "0.1.0"
+description = "Reproduction-document publisher: turn a deposited nirs4all .n4a into a methods + bibliography report and a live in-browser pipeline replay."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "CeCILL-2.1 OR AGPL-3.0-or-later" }
+authors = [{ name = "Gregory Beurier" }, { name = "nirs4all ecosystem" }]
+keywords = ["nirs4all", "NIRS", "reproducibility", "RO-Crate", "chemometrics", "PLS"]
+dependencies = ["PyYAML>=5.4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.5", "mypy>=1.8", "build"]
+
+[project.scripts]
+n4a-papers = "nirs4all_papers.cli:main"
+
+[project.urls]
+Homepage = "https://papers.nirs4all.org"
+Source = "https://github.com/GBeurier/nirs4all-papers"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+nirs4all_papers = ["data/*.json", "data/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+
+[tool.ruff]
+line-length = 140
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# These modules embed inline HTML / CSS / JS as string literals (the static-site
+# templates and the replay engine); long lines there are intrinsic, not a style issue.
+"src/nirs4all_papers/site/theme.py" = ["E501"]
+"src/nirs4all_papers/site/assets.py" = ["E501"]
+"src/nirs4all_papers/site/components.py" = ["E501"]
+"src/nirs4all_papers/site/pages.py" = ["E501"]
+"src/nirs4all_papers/site/charts.py" = ["E501"]
+# Tests embed long inline-JS harness strings and long assertions.
+"tests/*" = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
