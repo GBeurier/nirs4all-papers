@@ -73,7 +73,7 @@ def _copy_brand(root: Path, out: Path) -> None:
 
 def build_site(root: str | Path, out: str | Path) -> Path:
     """Build the reproduction-document site from ``root`` into ``out`` (regenerated wholesale)."""
-    from ..model import Catalog, load_catalog
+    from ..model import load_catalog
     from . import pages
 
     root = Path(root)
@@ -95,7 +95,7 @@ def build_site(root: str | Path, out: str | Path) -> Path:
     (out / marker).write_text("nirs4all-papers build output — safe to delete.\n", encoding="utf-8")
     (out / "paper").mkdir()
 
-    catalog: Catalog = load_catalog(root)
+    catalog = load_catalog(root)
 
     (out / "index.html").write_text(pages.render_index(catalog), encoding="utf-8")
     (out / "catalog.html").write_text(pages.render_catalog(catalog), encoding="utf-8")
@@ -108,12 +108,12 @@ def build_site(root: str | Path, out: str | Path) -> Path:
     return out
 
 
-def _write_seo(out: Path, catalog: "Catalog") -> None:
+def _write_seo(out: Path, catalog: Catalog) -> None:
     """Emit robots.txt + sitemap.xml for the public, indexed archive."""
     from .theme import SITE_URL
 
     paths = ["", "catalog.html"] + [f"paper/{p.slug}.html" for p in catalog.papers]
     urls = "".join(f"  <url><loc>{SITE_URL}/{p}</loc></url>\n" for p in paths)
-    sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls + "</urlset>\n"
-    (out / "sitemap.xml").write_text(sitemap, encoding="utf-8")
+    head = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    (out / "sitemap.xml").write_text(head + urls + "</urlset>\n", encoding="utf-8")
     (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
