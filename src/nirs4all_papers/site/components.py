@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .. import __version__
 from ..bibliography import Reference
 from .escape import esc, locator_link
 
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
     from ..model import PaperView
 
 GITHUB = "https://github.com/GBeurier/nirs4all-papers"
+_NAV_VER = "v" + ".".join(__version__.split(".")[:2])  # e.g. "v0.2"
 
 
 # ── Nav + footer ─────────────────────────────────────────────────────────
@@ -25,7 +27,7 @@ def nav(rel: str, active: str = "") -> str:
 
     return f"""
 <nav id="nav"><div class="container nav-inner">
-  <a class="nav-logo" href="{rel}index.html"><span class="mark"></span>&nbsp;<b>nirs4all</b>-papers&nbsp;<span>v0.1</span></a>
+  <a class="nav-logo" href="{rel}index.html"><img class="nav-mark" src="{rel}brand/icon.svg" alt="nirs4all-papers" width="28" height="28"><span class="nav-name"><b>nirs4all</b>-papers</span><span class="nav-ver">{_NAV_VER}</span></a>
   <div class="nav-links">
     <a href="{rel}index.html"{cls('index')}>Overview</a>
     <a href="{rel}catalog.html"{cls('catalog')}>Papers</a>

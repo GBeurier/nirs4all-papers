@@ -135,13 +135,13 @@ code, pre { font-family: var(--mono); }
   display: flex; align-items: center; gap: 10px;
   font-family: var(--display); font-weight: 600; font-size: 1.12rem; color: var(--text); margin-right: auto;
 }
-.nav-logo .mark {
-  width: 26px; height: 26px; border-radius: 7px;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--cyan-d) 100%);
-  box-shadow: 0 4px 12px -3px rgba(13,148,136,.5);
+.nav-logo .nav-mark {
+  width: 28px; height: 28px; border-radius: 8px; display: block; flex: 0 0 auto;
+  box-shadow: 0 4px 12px -3px rgba(194,37,92,.42);
 }
-.nav-logo b { font-weight: 700; }
-.nav-logo span { color: var(--text-3); font-weight: 500; font-family: var(--mono); font-size: .72rem; }
+.nav-logo .nav-name { white-space: nowrap; }
+.nav-logo .nav-name b { font-weight: 700; }
+.nav-logo .nav-ver { color: var(--text-3); font-weight: 500; font-family: var(--mono); font-size: .72rem; }
 .nav-links { display: flex; gap: 2px; align-items: center; }
 .nav-links a { padding: 7px 14px; border-radius: 8px; color: var(--text-2); font-size: .88rem; font-weight: 500; transition: all .2s; }
 .nav-links a:hover, .nav-links a.active { color: var(--text); background: rgba(15,23,42,0.05); }
