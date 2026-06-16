@@ -180,6 +180,7 @@ code, pre { font-family: var(--mono); }
 
 .hero-content { position: relative; z-index: 20; text-align: center; padding: 80px 0 64px; isolation: isolate; }
 .hero-content > * { position: relative; z-index: 1; }
+.hero-logo { display: block; width: min(460px, 80vw); height: auto; margin: 0 auto 30px; filter: drop-shadow(0 10px 22px rgba(194,37,92,.16)); }
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px;
   background: rgba(255,255,255,0.85); border: 1px solid rgba(13,148,136,0.18);
