@@ -65,7 +65,7 @@ reproduction page — the exact pipeline, a bibliography for every method, the p
 RO-Crate). It builds a static site for [papers.nirs4all.org](https://papers.nirs4all.org).
 
 ```bash
-pip install -e .
+pip install nirs4all-papers     # the publisher CLI (or: pip install -e . from a checkout)
 n4a-papers build --out site     # papers/*/  →  ./site  (open site/index.html)
 ```
 
