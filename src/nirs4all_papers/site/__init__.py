@@ -81,7 +81,7 @@ def _copy_brand(root: Path, out: Path) -> None:
         return
     brand_out = out / "brand"
     brand_out.mkdir(parents=True, exist_ok=True)
-    for name in ("favicon.ico", "icon.svg", "icon-180.png", "og.png"):
+    for name in ("favicon.ico", "icon.svg", "icon-180.png", "og.png", "horizontal.svg", "horizontal-dark.svg"):
         src = brand_src / name
         if src.exists():
             shutil.copy2(src, brand_out / name)

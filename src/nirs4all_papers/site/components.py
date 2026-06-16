@@ -72,6 +72,7 @@ def hero(n_papers: int, n_methods: int) -> str:
     <g id="wave-dots"></g>
   </svg>
   <div class="container hero-content">
+    <img class="hero-logo" src="brand/horizontal.svg" alt="nirs4all-papers" width="460">
     <div class="hero-badge"><span class="dot"></span> deposited · cited · re-runnable in the browser</div>
     <h1 class="hero-tagline">Every published pipeline, <em>reproducible</em></h1>
     <p class="hero-sub">Each nirs4all paper becomes a self-contained reproduction document — the exact
