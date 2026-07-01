@@ -36,11 +36,12 @@ def _file_meta(path: Path) -> dict[str, Any]:
     }
 
 
-def _write_paper_sidecars(view: PaperView, out: Path) -> None:
+def write_paper_sidecars(view: PaperView, out: str | Path) -> Path:
     """Write the per-paper deposit bundle: .n4a + pipeline.json + CITATION.cff + references.bib + RO-Crate."""
     from .. import provenance
     from ..bibliography import references_to_bibtex
 
+    out = Path(out)
     crate = out / "paper" / view.slug
     crate.mkdir(parents=True, exist_ok=True)
 
@@ -56,6 +57,10 @@ def _write_paper_sidecars(view: PaperView, out: Path) -> None:
     crate_files = [_file_meta(crate / name) for name in (view.bundle_filename, "pipeline.json", "CITATION.cff", "references.bib")]
     crate_meta = provenance.ro_crate(view, crate_files)
     (crate / "ro-crate-metadata.json").write_text(json.dumps(crate_meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    return crate
+
+
+_write_paper_sidecars = write_paper_sidecars
 
 
 def _copy_io_wasm(io_wasm: str | Path, out: Path) -> str:
@@ -125,7 +130,7 @@ def build_site(root: str | Path, out: str | Path, io_wasm: str | Path | None = N
     (out / "catalog.html").write_text(pages.render_catalog(catalog), encoding="utf-8")
     for view in catalog.papers:
         (out / "paper" / f"{view.slug}.html").write_text(pages.render_paper(view, io_base), encoding="utf-8")
-        _write_paper_sidecars(view, out)
+        write_paper_sidecars(view, out)
 
     _write_seo(out, catalog)
     _copy_brand(root, out)
