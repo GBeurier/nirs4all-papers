@@ -510,7 +510,7 @@ def page(*, title: str, rel: str, body: str, scripts: str = "", description: str
     ``<head>`` markup (scholarly ``citation_*`` meta + JSON-LD).
     """
     desc = description or "Reproduction documents for nirs4all papers — methods, bibliography, and a live in-browser pipeline replay."
-    url = f"{SITE_URL}/{canonical}".rstrip("/")
+    url = f"{SITE_URL}/{canonical.lstrip('/')}" if canonical else f"{SITE_URL}/"
     from .escape import esc
 
     return f"""<!doctype html>
@@ -522,6 +522,8 @@ def page(*, title: str, rel: str, body: str, scripts: str = "", description: str
 <meta name="description" content="{esc(desc)}">
 <meta name="theme-color" content="#0d9488">
 <link rel="canonical" href="{esc(url)}">
+<link rel="sitemap" type="application/xml" title="Sitemap" href="{SITE_URL}/sitemap.xml">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <link rel="icon" type="image/x-icon" href="{rel}brand/favicon.ico">
 <link rel="icon" type="image/svg+xml" href="{rel}brand/icon.svg">
 <link rel="apple-touch-icon" href="{rel}brand/icon-180.png">
