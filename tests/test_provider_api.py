@@ -4,11 +4,14 @@ from __future__ import annotations
 import json
 
 from nirs4all_papers.provider import (
+    bibtex,
     build_methods_section,
     build_repro_page,
+    citation,
     export_sidecars,
     inspect_bundle,
     list_papers,
+    load_paper,
     load_paper_bundle,
     provider_capabilities,
 )
@@ -22,6 +25,9 @@ def test_provider_capabilities_document_archive_boundaries():
     assert caps["executes"] is False
     assert caps["writes"] == "local_output"
     assert "runtime_execution" in caps["non_goals"]
+    assert "load_paper" in caps["verbs"]
+    assert "citation" in caps["verbs"]
+    assert "bibtex" in caps["verbs"]
     assert "export_sidecars" in caps["verbs"]
 
 
@@ -30,6 +36,7 @@ def test_provider_wraps_catalog_paper_and_bundle_reads():
     assert [paper.slug for paper in catalog.papers] == ["2026-pls-nirs-demo"]
 
     paper = load_paper_bundle(DEMO_DIR)
+    assert load_paper(DEMO_DIR).slug == paper.slug
     assert paper.slug == "2026-pls-nirs-demo"
     assert paper.bundle_filename == "model.n4a"
 
@@ -37,6 +44,13 @@ def test_provider_wraps_catalog_paper_and_bundle_reads():
     assert bundle.path.name == "model.n4a"
     assert bundle.pipeline["steps"]
     assert bundle.fingerprint == paper.bundle.fingerprint
+
+
+def test_citation_and_bibtex_are_pure_read_helpers():
+    cff = citation(DEMO_DIR)
+    bib = bibtex(DEMO_DIR)
+    assert "cff-version: 1.2.0" in cff
+    assert "@article{" in bib or "@misc{" in bib
 
 
 def test_build_methods_section_is_structured_without_rendering_pages():

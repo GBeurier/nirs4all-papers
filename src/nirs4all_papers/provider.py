@@ -12,7 +12,9 @@ from typing import Any
 
 from .bibliography import Reference, build_bibliography
 from .bundle import Bundle, read_bundle
-from .model import Catalog, PaperView, load_catalog, load_paper
+from .model import Catalog, PaperView, load_catalog
+from .model import load_paper as _load_paper_view
+from .provenance import citation_cff, paper_bibtex
 from .site import build_site, write_paper_sidecars
 
 
@@ -25,9 +27,12 @@ def provider_capabilities() -> dict[str, Any]:
         "dependencies": ["PyYAML"],
         "verbs": {
             "list_papers": "Read the committed papers catalog from a repository root.",
+            "load_paper": "Compatibility alias for reading one paper bundle into its reproduction view model.",
             "load_paper_bundle": "Read one paper directory into its reproduction view model.",
             "inspect_bundle": "Inspect a deposited .n4a archive without importing nirs4all core.",
             "build_methods_section": "Resolve method ids to bibliography references and citation mapping.",
+            "citation": "Render one paper bundle's CITATION.cff text without writing files.",
+            "bibtex": "Render one paper bundle's BibTeX entry without writing files.",
             "build_repro_page": "Build the static reproduction site into an explicit local output directory.",
             "export_sidecars": "Write one paper's reproduction sidecars into an explicit local output directory.",
         },
@@ -47,7 +52,12 @@ def list_papers(root: str | Path) -> Catalog:
 
 def load_paper_bundle(paper_dir: str | Path) -> PaperView:
     """Return the public reproduction view for one paper directory."""
-    return load_paper(paper_dir)
+    return _load_paper_view(paper_dir)
+
+
+def load_paper(paper_dir: str | Path) -> PaperView:
+    """Compatibility alias for :func:`load_paper_bundle`."""
+    return load_paper_bundle(paper_dir)
 
 
 def inspect_bundle(path: str | Path) -> Bundle:
@@ -66,6 +76,16 @@ def build_methods_section(method_ids: list[str]) -> dict[str, Any]:
     }
 
 
+def citation(paper_dir: str | Path) -> str:
+    """Return one paper bundle's ``CITATION.cff`` text without writing files."""
+    return citation_cff(load_paper_bundle(paper_dir))
+
+
+def bibtex(paper_dir: str | Path) -> str:
+    """Return one paper bundle's BibTeX entry without writing files."""
+    return paper_bibtex(load_paper_bundle(paper_dir))
+
+
 def build_repro_page(root: str | Path, out: str | Path, io_wasm: str | Path | None = None) -> Path:
     """Build the static reproduction site into ``out``."""
     return build_site(root, out, io_wasm=io_wasm)
@@ -73,7 +93,7 @@ def build_repro_page(root: str | Path, out: str | Path, io_wasm: str | Path | No
 
 def export_sidecars(paper_dir: str | Path, out: str | Path) -> Path:
     """Write one paper's deposit sidecars into ``out/paper/<slug>/`` and return that crate path."""
-    view = load_paper(paper_dir)
+    view = _load_paper_view(paper_dir)
     return write_paper_sidecars(view, out)
 
 
