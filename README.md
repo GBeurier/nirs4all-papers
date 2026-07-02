@@ -72,6 +72,18 @@ n4a-papers build --out site     # papers/*/  →  ./site  (open site/index.html)
 See [`docs/REPRODUCTION_PUBLISHER.md`](docs/REPRODUCTION_PUBLISHER.md) for the design and
 [`papers/README.md`](papers/README.md) for the per-paper bundle layout.
 
+## Provider/plugin facade
+
+For core/UI/provider clients, `nirs4all-papers` also exposes a thin first-party facade in
+`nirs4all_papers.provider`. It stays archive-local and write-bounded:
+
+- reads: `list_papers`, `load_paper`, `load_paper_bundle`, `inspect_bundle`,
+  `build_methods_section`, `citation`, `bibtex`;
+- explicit local output only: `build_repro_page`, `export_sidecars`.
+
+The facade does not execute pipelines, upload artifacts, or write back into repository, datasets, or
+benchmark stores.
+
 ## License
 
 This repository — reproducibility **code** and accompanying **content** alike — is dual-licensed
