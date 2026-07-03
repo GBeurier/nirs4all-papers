@@ -10,6 +10,10 @@
 Public archive for deposited nirs4all papers and reproducible public code
 bundles.
 
+Part of the [open-source NIRS tools](https://nirs4all.org/open-source-nirs-tools.html)
+ecosystem: file readers, datasets, methods, browser modelling, reproducible pipelines,
+papers, benchmarks, and release dashboards for near-infrared spectroscopy.
+
 This repository is for material that can be public and permanent:
 
 - accepted/deposited paper PDFs;
