@@ -13,6 +13,7 @@ from typing import Any
 from .bibliography import Reference, build_bibliography
 from .bundle import Bundle, read_bundle
 from .model import Catalog, PaperView, load_catalog, load_paper
+from .provenance import citation_cff, paper_bibtex
 from .site import build_site, write_paper_sidecars
 
 
@@ -28,6 +29,8 @@ def provider_capabilities() -> dict[str, Any]:
             "load_paper_bundle": "Read one paper directory into its reproduction view model.",
             "inspect_bundle": "Inspect a deposited .n4a archive without importing nirs4all core.",
             "build_methods_section": "Resolve method ids to bibliography references and citation mapping.",
+            "citation": "Render the paper's CITATION.cff sidecar text without writing files.",
+            "bibtex": "Render the paper's BibTeX sidecar text without writing files.",
             "build_repro_page": "Build the static reproduction site into an explicit local output directory.",
             "export_sidecars": "Write one paper's reproduction sidecars into an explicit local output directory.",
         },
@@ -64,6 +67,16 @@ def build_methods_section(method_ids: list[str]) -> dict[str, Any]:
         "citation_map": {method_id: ref.number for method_id, ref in id_to_ref.items()},
         "reference_ids": {method_id: ref.id for method_id, ref in id_to_ref.items()},
     }
+
+
+def citation(paper_dir: str | Path) -> str:
+    """Return the ``CITATION.cff`` text for one paper directory without writing files."""
+    return citation_cff(load_paper(paper_dir))
+
+
+def bibtex(paper_dir: str | Path) -> str:
+    """Return the paper BibTeX text for one paper directory without writing files."""
+    return paper_bibtex(load_paper(paper_dir))
 
 
 def build_repro_page(root: str | Path, out: str | Path, io_wasm: str | Path | None = None) -> Path:
