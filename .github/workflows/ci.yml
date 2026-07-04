@@ -19,6 +19,8 @@ jobs:
           python-version: "3.11"
       - name: Install (with dev extras)
         run: python -m pip install --upgrade pip ".[dev]" pytest-cov
+      - name: Install repository handoff provider
+        run: python -m pip install -e external/nirs4all-repository
       - name: Lint
         run: ruff check src tests
       - name: Types
