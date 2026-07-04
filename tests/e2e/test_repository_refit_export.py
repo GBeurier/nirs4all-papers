@@ -14,7 +14,7 @@ from nirs4all_papers.provider import export_sidecars, load_paper_bundle
 
 PAPERS_ROOT = Path(__file__).resolve().parents[2]
 WORKSPACE_ROOT = PAPERS_ROOT.parent
-REPOSITORY_ROOT = WORKSPACE_ROOT / "nirs4all-repository"
+REPOSITORY_ROOT = Path(os.environ.get("NIRS4ALL_REPOSITORY_ROOT", WORKSPACE_ROOT / "nirs4all-repository")).expanduser().resolve()
 REPOSITORY_SRC = REPOSITORY_ROOT / "src"
 DEMO_PAPER_DIR = PAPERS_ROOT / "papers" / "2026-pls-nirs-demo"
 
