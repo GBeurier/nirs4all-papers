@@ -29,7 +29,15 @@ def test_paper_export_reopens_as_repository_refit_handoff(artifacts_dir: Path) -
     crate = export_sidecars(DEMO_PAPER_DIR, export_root)
     zip_path = _zip_tree(export_root, artifacts_dir / "paper-export.zip")
 
-    refit_recipe = _refit_recipe_from_paper(paper)
+    python_reopen = _load_python_reopen_result(artifacts_dir)
+    refit_recipe = _refit_recipe_from_python_reopen(python_reopen) if python_reopen else _refit_recipe_from_paper(paper)
+    fingerprints = {
+        "paper_bundle_sha256": _sha256(crate / paper.bundle_filename),
+        "paper_pipeline_sha256": _sha256(crate / "pipeline.json"),
+        "paper_export_zip_sha256": _sha256(zip_path),
+    }
+    if python_reopen is not None:
+        fingerprints["python_reopened_result_sha256"] = _sha256(artifacts_dir / "reopened-result.json")
     request = {
         "pipeline_id": pipeline_id,
         "repo_root": str(repo_root),
@@ -40,11 +48,8 @@ def test_paper_export_reopens_as_repository_refit_handoff(artifacts_dir: Path) -
             "created_at": str(paper.bundle.manifest.get("created_at") or "2026-06-14")[:10],
             "authors": [{"name": author.name, "affiliation": author.affiliation} for author in paper.authors],
         },
-        "fingerprints": {
-            "paper_bundle_sha256": _sha256(crate / paper.bundle_filename),
-            "paper_pipeline_sha256": _sha256(crate / "pipeline.json"),
-            "paper_export_zip_sha256": _sha256(zip_path),
-        },
+        "fingerprints": fingerprints,
+        "python_reopen": _python_reopen_summary(python_reopen),
     }
     request_path = artifacts_dir / "repository-handoff-request.json"
     request_path.write_text(json.dumps(request, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -60,10 +65,12 @@ def test_paper_export_reopens_as_repository_refit_handoff(artifacts_dir: Path) -
             "source_slug": paper.slug,
         },
         "repository_handoff": handoff,
+        "python_reopen": _python_reopen_summary(python_reopen),
         "refit": {
             "executed": False,
             "handoff_call": "nirs4all.run(pipe.to_nirs4all(), dataset)",
-            "reason": "Runtime refit belongs to nirs4all; this smoke covers export, descriptor validation, and provider handoff only.",
+            "recipe_source": "python-reopened-result" if python_reopen is not None else "paper-demo",
+            "reason": "Runtime refit parity belongs to nirs4all; this smoke consumes the Python ledger when present, then covers paper export, descriptor validation, and provider handoff.",
         },
     }
     evidence_path.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -74,6 +81,9 @@ def test_paper_export_reopens_as_repository_refit_handoff(artifacts_dir: Path) -
     assert handoff["reopened_recipe"]["pipeline"] == refit_recipe["pipeline"]
     assert handoff["publication_blockers"] == []
     assert not any("FullTrainFoldSplitter" in json.dumps(step) for step in handoff["reopened_recipe"]["pipeline"])
+    if python_reopen is not None:
+        descriptor_fingerprints = handoff["descriptor"]["provenance"]["fingerprints"]
+        assert descriptor_fingerprints["python_reopened_result_sha256"] == _sha256(artifacts_dir / "reopened-result.json")
 
 
 def _run_repository_handoff(request_path: Path) -> dict[str, Any]:
@@ -124,6 +134,50 @@ def _refit_recipe_from_paper(paper: Any) -> dict[str, Any]:
     if not steps:
         raise AssertionError(f"paper {paper.slug} has no reproducible steps for a repository refit recipe")
     return {"name": f"{paper.slug} refit recipe", "pipeline": steps}
+
+
+def _load_python_reopen_result(artifacts_dir: Path) -> dict[str, Any] | None:
+    path = artifacts_dir / "reopened-result.json"
+    if not path.exists():
+        return None
+    result = json.loads(path.read_text(encoding="utf-8"))
+    if result.get("status") != "passed":
+        raise AssertionError(f"Python reopen result did not pass: {result.get('status')!r}")
+    parity = result.get("parity")
+    if not isinstance(parity, dict):
+        raise AssertionError("Python reopen result is missing parity evidence")
+    tolerance = float(parity.get("tolerance", 0.0))
+    for key in ("best_prediction_abs_max", "final_prediction_abs_max", "bundle_reopen_prediction_abs_max"):
+        if float(parity.get(key, float("inf"))) > tolerance:
+            raise AssertionError(f"Python reopen parity {key} exceeds tolerance: {parity.get(key)!r} > {tolerance!r}")
+    _refit_recipe_from_python_reopen(result)
+    return result
+
+
+def _refit_recipe_from_python_reopen(result: dict[str, Any]) -> dict[str, Any]:
+    recipe = result.get("repository_refit_recipe")
+    if not isinstance(recipe, dict):
+        raise AssertionError("Python reopen result is missing repository_refit_recipe")
+    pipeline = recipe.get("pipeline")
+    if not isinstance(pipeline, list) or not pipeline:
+        raise AssertionError("Python reopen repository_refit_recipe.pipeline must be a non-empty list")
+    return recipe
+
+
+def _python_reopen_summary(result: dict[str, Any] | None) -> dict[str, Any]:
+    if result is None:
+        return {"consumed": False}
+    parity = result["parity"]
+    return {
+        "consumed": True,
+        "schema_version": result.get("schema_version"),
+        "git_head": result.get("git_head"),
+        "bundle_sha256": result.get("bundle_reopen", {}).get("sha256"),
+        "best_prediction_abs_max": parity.get("best_prediction_abs_max"),
+        "final_prediction_abs_max": parity.get("final_prediction_abs_max"),
+        "bundle_reopen_prediction_abs_max": parity.get("bundle_reopen_prediction_abs_max"),
+        "tolerance": parity.get("tolerance"),
+    }
 
 
 def _fresh_dir(path: Path) -> Path:
