@@ -9,6 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout nirs4all-repository handoff provider
+        uses: actions/checkout@v4
+        with:
+          repository: GBeurier/nirs4all-repository
+          path: external/nirs4all-repository
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -19,6 +24,8 @@ jobs:
       - name: Types
         run: mypy src/nirs4all_papers
       - name: Tests (with coverage)
+        env:
+          NIRS4ALL_REPOSITORY_ROOT: ${{ github.workspace }}/external/nirs4all-repository
         run: pytest -q --cov=nirs4all_papers --cov-report=xml
       - name: Upload coverage
         if: always()
