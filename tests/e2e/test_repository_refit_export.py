@@ -75,6 +75,23 @@ def test_paper_export_reopens_as_repository_refit_handoff(artifacts_dir: Path) -
     assert evidence_path.is_file()
     assert handoff["pipeline_id"] == pipeline_id
     assert handoff["reopened_recipe"]["pipeline"] == refit_recipe["pipeline"]
+    assert handoff["forced_best_refit_contract"] == {
+        "force_best_refit": True,
+        "selected_pipeline_id": pipeline_id,
+        "repository_reopen_validated": True,
+    }
+    assert handoff["repository_validation"]["ok"] is True
+    assert handoff["repository_validation"]["errors"] == []
+    assert handoff["repository_validation"]["security_findings"] == []
+    assert handoff["repository_reopen"]["selected_pipeline_id"] == pipeline_id
+    assert handoff["repository_reopen"]["recipe_step_count"] == len(refit_recipe["pipeline"])
+    assert handoff["repository_reopen"]["config_sha256"] == handoff["descriptor"]["provenance"]["fingerprints"]["config_sha256"]
+    assert handoff["repository_reopen"]["repository_descriptor_yaml_sha256"] == handoff["descriptor"]["provenance"]["fingerprints"]["repository_descriptor_yaml_sha256"]
+    assert handoff["repository_reopen"]["repository_manifest_json_sha256"] == handoff["descriptor"]["provenance"]["fingerprints"]["repository_manifest_json_sha256"]
+    assert handoff["repository_reopen"]["repository_catalog_index_sha256"] == handoff["descriptor"]["provenance"]["fingerprints"]["repository_catalog_index_sha256"]
+    assert handoff["descriptor"]["provenance"]["fingerprints"]["repository_force_best_refit"] == "true"
+    assert handoff["descriptor"]["provenance"]["fingerprints"]["repository_selected_pipeline_id"] == pipeline_id
+    assert handoff["descriptor"]["provenance"]["fingerprints"]["repository_reopen_validated"] == "true"
     assert handoff["publication_blockers"] == []
     assert not any("FullTrainFoldSplitter" in json.dumps(step) for step in handoff["reopened_recipe"]["pipeline"])
     if python_reopen is not None:
@@ -259,6 +276,7 @@ def _zip_tree(source: Path, target: Path) -> Path:
 _REPOSITORY_HANDOFF_SCRIPT = r"""
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -283,6 +301,10 @@ def class_sequence(steps):
     return out
 
 
+def sha256_path(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 repo_root = Path(request["repo_root"])
 pipeline_id = request["pipeline_id"]
@@ -303,6 +325,13 @@ bundle_dir.mkdir(parents=True)
 
 fingerprints = recipe_fingerprints(recipe, RecipeFormat.nirs4all_pipeline_config)
 fingerprints.update(request["fingerprints"])
+fingerprints.update(
+    {
+        "repository_force_best_refit": "true",
+        "repository_selected_pipeline_id": pipeline_id,
+        "repository_reopen_validated": "pending",
+    }
+)
 paper = request["paper"]
 descriptor = PipelineDescriptor.model_validate(
     {
@@ -345,15 +374,45 @@ entries = n4r.get_pipeline_list(root=repo_root, framework="nirs4all", kind="reci
 if not entries or entries[0]["id"] != pipeline_id:
     raise SystemExit("repository provider list did not return the refit descriptor")
 
+descriptor_path = bundle_dir / "descriptor.yaml"
+manifest_path = bundle_dir / "manifest.json"
+catalog_index_path = repo_root / "catalog" / "index.json"
+repo_fingerprints = {
+    "repository_descriptor_yaml_sha256": sha256_path(descriptor_path),
+    "repository_manifest_json_sha256": sha256_path(manifest_path),
+    "repository_catalog_index_sha256": sha256_path(catalog_index_path),
+}
+descriptor_dict = pipe.descriptor.model_dump(mode="json", exclude_none=True)
+descriptor_fingerprints = descriptor_dict["provenance"]["fingerprints"]
+descriptor_fingerprints.update(repo_fingerprints)
+descriptor_fingerprints["repository_reopen_validated"] = "true"
+
 print(
     json.dumps(
         {
-            "descriptor": pipe.descriptor.model_dump(mode="json", exclude_none=True),
+            "descriptor": descriptor_dict,
             "catalog_index": "repository-catalog/catalog/index.json",
+            "forced_best_refit_contract": {
+                "force_best_refit": True,
+                "selected_pipeline_id": pipeline_id,
+                "repository_reopen_validated": True,
+            },
             "pipeline_id": pipe.id,
             "publication_blockers": pipe.descriptor.publication_blockers(),
             "recipe_class_sequence": class_sequence(reopened["pipeline"]),
             "recipe_step_count": len(reopened["pipeline"]),
+            "repository_reopen": {
+                "selected_pipeline_id": pipe.id,
+                "recipe_step_count": len(reopened["pipeline"]),
+                "config_sha256": descriptor_fingerprints["config_sha256"],
+                **repo_fingerprints,
+            },
+            "repository_validation": {
+                "ok": report.ok,
+                "errors": report.errors,
+                "security_findings": report.security_findings,
+                "publication_blockers": report.publication_blockers,
+            },
             "reopened_recipe": reopened,
         },
         sort_keys=True,
