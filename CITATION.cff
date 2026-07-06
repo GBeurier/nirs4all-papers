@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "nirs4all-papers"
+abstract: >-
+  Public archive of deposited nirs4all-ecosystem papers: accepted/deposited PDFs, public reproducibility code (RO-Crate), and stable WASM/static companions linked from nirs4all.org.
+type: software
+authors:
+  - family-names: Beurier
+    given-names: Gregory
+    email: beurier@cirad.fr
+    affiliation: CIRAD
+repository-code: "https://github.com/GBeurier/nirs4all-papers"
+url: "https://papers.nirs4all.org"
+license:
+  - CECILL-2.1
+  - AGPL-3.0-or-later
+version: "0.2.2"
+keywords:
+  - NIRS
+  - spectroscopy
+  - reproducibility
+  - RO-Crate
+  - chemometrics
+  - papers
