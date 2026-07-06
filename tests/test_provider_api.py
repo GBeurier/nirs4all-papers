@@ -23,7 +23,7 @@ def test_provider_capabilities_document_archive_boundaries():
     caps = provider_capabilities()
     assert caps["provider"] == "nirs4all-papers"
     assert caps["executes"] is False
-    assert caps["writes"] == "local_output"
+    assert caps["writes"] == "local-output"
     assert "runtime_execution" in caps["non_goals"]
     assert "load_paper" in caps["verbs"]
     assert "citation" in caps["verbs"]

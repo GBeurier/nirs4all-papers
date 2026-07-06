@@ -23,7 +23,7 @@ def provider_capabilities() -> dict[str, Any]:
     return {
         "provider": "nirs4all-papers",
         "executes": False,
-        "writes": "local_output",
+        "writes": "local-output",
         "dependencies": ["PyYAML"],
         "verbs": {
             "list_papers": "Read the committed papers catalog from a repository root.",
