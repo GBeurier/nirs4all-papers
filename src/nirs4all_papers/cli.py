@@ -72,8 +72,8 @@ def main(argv: list[str] | None = None) -> int:
         "--io-wasm",
         default=None,
         metavar="DIR",
-        help="optional nirs4all-formats/io WASM dir (with formats/ + io/) to bundle for vendor-file replay, "
-        "e.g. ../nirs4all-web/studio-lite/src/engine/wasm",
+        help="optional nirs4all-formats/io WASM bundle dir (with formats/ + io/) to bundle for "
+        "vendor-file replay, e.g. the nirs4all-web WASM bundle directory",
     )
     p_build.set_defaults(func=_cmd_build)
 

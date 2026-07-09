@@ -96,7 +96,7 @@ def build_site(root: str | Path, out: str | Path, io_wasm: str | Path | None = N
     """Build the reproduction-document site from ``root`` into ``out`` (regenerated wholesale).
 
     ``io_wasm`` (optional) is a directory holding ``formats/`` and ``io/`` nirs4all-formats /
-    nirs4all-io WASM bundles (e.g. ``nirs4all-web/studio-lite/src/engine/wasm``). When given, it is
+    nirs4all-io WASM bundles, for example the nirs4all-web WASM bundle directory. When given, it is
     copied into ``out/wasm/`` so the replay's "run on your own data" can decode vendor spectra files
     in-browser; otherwise only the CSV upload path is available.
     """
