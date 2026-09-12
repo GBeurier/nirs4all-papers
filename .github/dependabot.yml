@@ -12,6 +12,8 @@ updates:
 
   - package-ecosystem: "pip"
     directory: "/"
+    exclude-paths:
+      - "docs/**"
     schedule:
       interval: "weekly"
     groups:
@@ -19,3 +21,19 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: "chore"
+
+  - package-ecosystem: "pip"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: "increase"
+    groups:
+      documentation:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "sphinx"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "myst-parser"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "docs"
