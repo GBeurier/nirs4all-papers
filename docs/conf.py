@@ -14,7 +14,8 @@ source_suffix = {
     ".rst": "restructuredtext",
     ".md": "markdown",
 }
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+# Maintenance reports are repository records, outside the published user guide.
+exclude_patterns = ["_build", "maintenance/**", "Thumbs.db", ".DS_Store"]
 
 html_theme = "furo"
 html_title = "nirs4all-papers"

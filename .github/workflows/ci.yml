@@ -28,6 +28,10 @@ jobs:
         run: ruff check src tests
       - name: Types
         run: mypy src/nirs4all_papers
+      - name: Install pinned documentation dependencies
+        run: python -m pip install -r docs/requirements.txt
+      - name: Build documentation
+        run: python -m sphinx -W --keep-going -b html docs docs/_build/html
       - name: Tests (with coverage)
         env:
           NIRS4ALL_REPOSITORY_ROOT: ${{ github.workspace }}/external/nirs4all-repository
