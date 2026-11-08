@@ -1,0 +1,6 @@
+Papers presentation bundle: nirs4all-ui 0.2.2-local.20261107.2 StatTile (CeCILL-2.1 OR AGPL-3.0-or-later).
+react 18.3.1: MIT; see react/LICENSE.
+react-dom 18.3.1: MIT; see react-dom/LICENSE.
+scheduler 0.23.2: MIT; see scheduler/LICENSE.
+UI upstream notices under ui/ describe the upstream distribution, including its separate optional browser bundle.
+That upstream browser bundle is not used here; the actual bundled React versions are listed above.

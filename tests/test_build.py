@@ -21,6 +21,14 @@ def test_build_emits_pages_and_sidecars(tmp_path, sdk_paper):
     html = page.read_text(encoding="utf-8")
     assert not (crate / "pipeline.json").exists()
     assert "as published" in html
+    # The affected UI gate requires the real staged consumer assets, not static-only success.
+    assert (out / "assets/papers-ui/papers-ui.js").is_file()
+    assert (out / "assets/papers-ui/licenses/NOTICE.txt").is_file()
+    assert '<script defer src="../assets/papers-ui/papers-ui.js"></script>' in html
+    assert '<div id="papers-ui" class="papers-ui" hidden></div>' in html
+    assert '<script id="papers-ui-data" type="application/json">' in html
+    assert '<details id="papers-static-results" open>' in html
+    assert "Complete published results — static text" in html
     assert "Current document reading does not run" in html
     assert "citation_title" in html  # scholarly meta
     assert "application/ld+json" in html  # JSON-LD
@@ -74,8 +82,13 @@ def test_archive_only_without_readers_preserves_raw_download_and_released_sideca
     frozen_cff = b'cff-version: 1.2.0\ntitle: "Frozen citation"\n'
     (paper / "released.cff").write_bytes(frozen_cff)
     (paper / "paper.json").write_text(json.dumps({"title": "Historical", "archive_sidecars": ["released.cff"]}))
-    def forbidden(name):
-        pytest.fail("archive-only publication imported an optional owner")
+    original_import_module = bundle.importlib.import_module
+
+    def forbidden(name, package=None):
+        if name.partition(".")[0] in {"nirs4all_core", "nirs4all", "n4a"}:
+            pytest.fail("archive-only publication imported an optional owner")
+        return original_import_module(name, package)
+
     monkeypatch.setattr(bundle.importlib, "import_module", forbidden)
     out = build_site(root, tmp_path / "output")
     assert (out / ".n4a-papers-build").exists()

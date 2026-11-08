@@ -123,6 +123,7 @@ def build_site(
     """
     from ..model import load_catalog
     from . import pages
+    from .shared_ui import copy_ui_resources
 
     root = Path(root)
     out = Path(out)
@@ -143,6 +144,7 @@ def build_site(
     (out / marker).write_text("nirs4all-papers build output — safe to delete.\n", encoding="utf-8")
     (out / "paper").mkdir()
 
+    shared_ui = copy_ui_resources(out)
     io_base = _copy_io_wasm(io_wasm, out) if io_wasm else ""
 
     catalog = load_catalog(root, read_current=read_current)
@@ -150,7 +152,7 @@ def build_site(
     (out / "index.html").write_text(pages.render_index(catalog), encoding="utf-8")
     (out / "catalog.html").write_text(pages.render_catalog(catalog), encoding="utf-8")
     for view in catalog.papers:
-        (out / "paper" / f"{view.slug}.html").write_text(pages.render_paper(view, io_base), encoding="utf-8")
+        (out / "paper" / f"{view.slug}.html").write_text(pages.render_paper(view, io_base, shared_ui=shared_ui), encoding="utf-8")
         write_paper_sidecars(view, out)
 
     _write_seo(out, catalog)

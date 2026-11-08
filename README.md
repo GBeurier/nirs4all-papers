@@ -91,6 +91,20 @@ Historical approximate-JS companions retain their separate labels and frozen byt
 views do not execute that replay or claim native parity. No source archive or generated `site/` is
 rewritten by reading. Builds retain the output marker and refuse to wipe unmarked directories.
 
+## Shared UI presentation
+
+Paper pages use the actual UI.2 `StatTile` export for a compact reading/identity summary and
+**as published** result cards. A partition filter changes only the displayed cards; it does not
+select, rank or recompute scores. Reading and execution remain distinct, with execution explicitly
+**Not evaluated**. Original downloads, full owner documents and complete static results remain
+accessible without JavaScript. All enhancement assets are local; the existing site chrome is separate.
+
+The Python package ships prebuilt resources under `data/ui/`. The installed builder does not call or
+look for Node, and an unstaged source checkout retains static-only publication. Maintainer-only
+staging uses `ui/build.mjs`, the exact accepted UI archive and an explicit existing Web dependency
+cohort, without an npm install or UI rebuild. See the
+[presentation staging instructions](docs/REPRODUCTION_PUBLISHER.md#shared-ui-presentation-staging).
+
 ## Provider/plugin facade
 
 `nirs4all_papers.provider` exposes `list_papers`, `load_paper`, `load_paper_bundle`, `inspect_bundle`,
