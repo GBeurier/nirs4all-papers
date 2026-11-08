@@ -30,7 +30,10 @@ Source = "https://github.com/GBeurier/nirs4all-papers"
 where = ["src"]
 
 [tool.setuptools.package-data]
-nirs4all_papers = ["data/*.json", "data/*.yaml"]
+nirs4all_papers = [
+    "data/*.json", "data/*.yaml", "data/ui/*", "data/ui/licenses/*",
+    "data/ui/licenses/*/*", "data/ui/licenses/*/*/*", "data/ui/licenses/*/*/*/*",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

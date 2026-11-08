@@ -71,4 +71,49 @@ separate, including the latter's separately authorized external Repository setup
 No server refit, vendor parser, model deserialization, execution, score recomputation or source archive
 mutation. Frozen scientific kits, models, locks, manuscripts and provenance remain upstream evidence.
 Historical JS replay remains an approximate independent reference, not production WASM parity.
-Reusable UI adoption is a separate batch; this reader adds only truthful text/documents/status.
+The optional local presentation island changes display only; owner reading and scientific behavior are unchanged.
+
+
+## Shared UI presentation staging
+
+The publisher consumes the actual UI.2 `StatTile` component for neutral reading/identity and
+as-published result cards. Its partition selector preserves supplied labels, order and duplicates.
+A missing partition is distinct from a supplied partition named “All”. Values use the same display
+strings as the existing static results, including `nan`, `inf`, `-inf` and `—`; no numerical value is
+calculated or substituted. A fixed JSON whitelist excludes metadata dumps, local paths, reading
+exceptions, recipes and owner documents. React renders the projected strings as text.
+
+The island starts hidden and becomes visible after a successful mount. Complete static results remain
+in a native disclosure (initially open), with provenance, exact downloads and full owner documents
+unchanged. No JavaScript is needed to access them. Missing or blocked enhancement assets retain
+static publication. The island makes no network/storage/owner calls and adds no external assets;
+existing font/analytics declarations in the host chrome are outside this presentation change.
+
+Node is needed only for explicitly requested maintainer staging, never by `build_site`, the installed
+CLI, install hooks or wheel creation. Use an existing offline Web dependency cohort. The accepted
+archive SHA-256 is `237a3bf306bdb6fec5088783c425381bcf125540ba7ad25e1aec0604198d7728`.
+The supplied local tooling cohort has React/ReactDOM 18.3.1, scheduler 0.23.2, and esbuild 0.25.12.
+
+```bash
+node ui/build.mjs \
+  --archive /path/to/nirs4all-ui-0.2.2-local.20261107.2.tgz \
+  --modules /path/to/nirs4all-web/web-app/node_modules \
+  --stage /path/to/empty-private-stage \
+  --out src/nirs4all_papers/data/ui
+```
+
+The script refuses an unrecognized archive and nonempty stage/output directories. It extracts the
+accepted archive directly, uses its public qualification export and Web's explicit React/DOM cohort,
+and emits one classic IIFE plus unchanged upstream qualification CSS and a small Papers stylesheet.
+It does not use Web's installed UI copy, run npm lifecycle hooks or rebuild UI/Core/SDK/Methods.
+The resource manifest records actual dependency/tool versions, archive/source hashes and output
+hashes. UI licences/notices and the actual bundled React/DOM/scheduler MIT texts accompany the files;
+the UI upstream notice's separate browser-bundle versions do not describe this Papers bundle.
+
+Stage once before making the consumer wheel. Package-data includes nested notices; the Python builder
+copies resources via `importlib.resources` to `assets/papers-ui/`. An unstaged source checkout stays
+static-only. A current-reader gate and a shared-UI gate must exercise their actual respective paths;
+static-only success is not shared-UI qualification. The affected shared-UI gate is the focused
+projection tests plus existing build tests, one filter/reset browser path and one no-JS or blocked
+bundle fallback, followed by one candidate-wheel resource/Node-free builder check. No owner suite,
+fit, model deserialization, real archive regeneration or deployment is implied.

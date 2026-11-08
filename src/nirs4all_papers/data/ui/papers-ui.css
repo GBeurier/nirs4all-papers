@@ -1,0 +1,13 @@
+/* SPDX-License-Identifier: CeCILL-2.1 OR AGPL-3.0-or-later */
+.papers-ui[hidden] { display: none; }
+.papers-ui { margin-bottom: 1.5rem; }
+.papers-ui-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .8rem; }
+.papers-ui .n4q-stat { min-width: 0; }
+.papers-ui .papers-ui-identity .n4q-stat-value,
+.papers-ui .papers-ui-text .n4q-stat-value { font-size: 1rem; overflow-wrap: anywhere; }
+.papers-ui-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.papers-ui-controls select, .papers-ui-controls button { max-width: 100%; padding: .4rem .6rem; font: inherit; }
+.papers-ui-controls :focus-visible,
+#papers-static-results > summary:focus-visible { outline: 2px solid var(--teal, #0d9488); outline-offset: 3px; }
+#papers-static-results { min-width: 0; }
+#papers-static-results > summary { cursor: pointer; padding: .5rem 0; }

@@ -1,0 +1,39 @@
+{
+  "ui": {
+    "version": "0.2.2-local.20261107.2",
+    "archive_sha256": "237a3bf306bdb6fec5088783c425381bcf125540ba7ad25e1aec0604198d7728",
+    "export": "nirs4all-ui/qualification:StatTile"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "scheduler": "0.23.2"
+  },
+  "tools": {
+    "node": "v24.16.0",
+    "esbuild": "0.25.12"
+  },
+  "entrypoint_sha256": "03128412348127a2730112cefd609ea2c83c5aa6ea375943e897d2cf064c5c4f",
+  "files": {
+    "licenses/NOTICE.txt": "63d7aa094da0e55088924e9871f7f5f85251854ae488cce2398fbe9adad42a23",
+    "licenses/react/LICENSE": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+    "licenses/react-dom/LICENSE": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+    "licenses/scheduler/LICENSE": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+    "licenses/ui/LICENSE": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+    "licenses/ui/LICENSES/AGPL-3.0-or-later.txt": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+    "licenses/ui/LICENSES/Apache-2.0.txt": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff",
+    "licenses/ui/LICENSES/COMMERCIAL-LICENSE.md": "b9e3872363e1e86b83f0e6edd43db7c745afa302b8aa017896b084b432d332a1",
+    "licenses/ui/LICENSES/COMMERCIAL-LICENSE_FR.md": "4411d56899820ff31de623c308b6f4a2ac7d5fefb4b49e2b56cf3939889168ae",
+    "licenses/ui/LICENSES/CeCILL-2.1.txt": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5",
+    "licenses/ui/LICENSES/MIT.txt": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+    "licenses/ui/LICENSES/THIRD-PARTY/README.md": "0962af54004e2fa30c25cac39f8eddb51e0fa1cd4cbde3030ee3560f555551ef",
+    "licenses/ui/LICENSES/THIRD-PARTY/react-dom.LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+    "licenses/ui/LICENSES/THIRD-PARTY/react.LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+    "licenses/ui/LICENSES/THIRD-PARTY/scheduler.LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+    "licenses/ui/LICENSING.md": "d7cc987d29b8891432114882c857d6677c16a7dae22f698663c8721db1f57dfd",
+    "licenses/ui/THIRD_PARTY_NOTICES.md": "e1ad28ce44cd64979b14e0d33e1317d9ab58271335cfe9f1bfd9ec5c475d68f5",
+    "papers-ui.css": "71f9a9c1713f24289f5a8fec35752e937ca59ae12d97bd5e4da6b0d617ee6cbf",
+    "papers-ui.js": "c3fd28ab01ef0bd6d3d8946088f8e59b308e8295775abbca13ea1185f944e519",
+    "qualification.css": "965753ec9d7573ee6de0c178decb7d8e6e08573ff7d90eb728d1ee3fed5bf9a3"
+  }
+}

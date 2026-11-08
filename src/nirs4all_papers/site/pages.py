@@ -15,6 +15,7 @@ from ..model import Catalog, PaperView
 from . import components as C
 from .charts import spectra_preview
 from .escape import cell, esc, inline_json, locator_link, num, safe_url
+from .shared_ui import projection_json
 from .theme import SITE_URL, page
 
 # Build date stamp (constant within a build process, so output stays idempotent per run).
@@ -358,7 +359,7 @@ def _scholarly_head(view: PaperView) -> str:
     return "\n".join(tags) + "\n" + script
 
 
-def render_paper(view: PaperView, io_wasm_base: str = "") -> str:
+def render_paper(view: PaperView, io_wasm_base: str = "", *, shared_ui: bool = False) -> str:
     rel = "../"
     keywords = "".join(f'<span class="kw">{esc(k)}</span>' for k in view.keywords)
     kw_html = f'<div class="paper-kw">{keywords}</div>' if keywords else ""
@@ -382,8 +383,17 @@ def render_paper(view: PaperView, io_wasm_base: str = "") -> str:
         f'<section class="panel wide"><h2>Bibliography<span class="h2-tag">{len(view.references)} references</span></h2>'
         f'<div class="panel-body">{C.reference_list(view.references)}</div></section>',
     )
+    static_results = _results_panel(view)
+    provenance_panel = _provenance_panel(view, rel)
+    if shared_ui:
+        static_results = ('<details id="papers-static-results" open><summary>Complete published results — static text</summary>'
+                          + static_results + '</details>')
+        provenance_panel = provenance_panel.replace(
+            '<div class="panel-body">',
+            '<div class="panel-body"><div id="papers-ui" class="papers-ui" hidden></div>', 1,
+        )
     results_grid = (
-        f'<div id="results" class="panel-grid panel-anchor">{_protocol_panel(view)}{_results_panel(view)}{_dataset_panel(view)}</div>'
+        f'<div id="results" class="panel-grid panel-anchor">{_protocol_panel(view)}{static_results}{_dataset_panel(view)}</div>'
     )
 
     entries = [
@@ -395,7 +405,7 @@ def render_paper(view: PaperView, io_wasm_base: str = "") -> str:
             'not shown on this page; no native parity is claimed.</p></div></section>')),
         ("bibliography", "Bibliography", bib_panel),
         ("license", "Licensing", _inject("license", _license_panel(view))),
-        ("provenance", "Provenance", _inject("provenance", _provenance_panel(view, rel))),
+        ("provenance", "Provenance", _inject("provenance", provenance_panel)),
         ("cite", "Cite this", _inject("cite", _citation_panel(view))),
     ]
     entries = [(pid, title, html) for pid, title, html in entries if html.strip()]
@@ -428,11 +438,19 @@ def render_paper(view: PaperView, io_wasm_base: str = "") -> str:
 </section>
 {C.footer(rel)}
 """
+    ui_head = ""
+    ui_script = ""
+    if shared_ui:
+        body += '<script id="papers-ui-data" type="application/json">' + projection_json(view) + '</script>'
+        ui_head = ('<link rel="stylesheet" href="../assets/papers-ui/qualification.css">'
+                   '<link rel="stylesheet" href="../assets/papers-ui/papers-ui.css">')
+        ui_script = '<script defer src="../assets/papers-ui/papers-ui.js"></script>'
     return page(
         title=f"{view.title} — nirs4all-papers",
         rel=rel,
         body=body,
         description=view.abstract[:180] if view.abstract else "",
         canonical=f"paper/{view.slug}.html",
-        head_extra=_scholarly_head(view),
+        head_extra=_scholarly_head(view) + ui_head,
+        scripts=ui_script,
     )
