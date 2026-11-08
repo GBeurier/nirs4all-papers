@@ -25,11 +25,12 @@ def provider_capabilities() -> dict[str, Any]:
         "executes": False,
         "writes": "local-output",
         "dependencies": ["PyYAML"],
+        "optional_dependencies": {"current-reader": ["nirs4all-core"], "sdk-host-reader": ["nirs4all"]},
         "verbs": {
             "list_papers": "Read the committed papers catalog from a repository root.",
             "load_paper": "Compatibility alias for reading one paper bundle into its reproduction view model.",
             "load_paper_bundle": "Read one paper directory into its reproduction view model.",
-            "inspect_bundle": "Inspect a deposited .n4a archive without importing nirs4all core.",
+            "inspect_bundle": "Inspect current V1 through Core and SDK owner JSON APIs, without fitted-object loading.",
             "build_methods_section": "Resolve method ids to bibliography references and citation mapping.",
             "citation": "Render one paper bundle's CITATION.cff text without writing files.",
             "bibtex": "Render one paper bundle's BibTeX entry without writing files.",
@@ -40,29 +41,31 @@ def provider_capabilities() -> dict[str, Any]:
             "runtime_execution",
             "upload_service",
             "ecosystem_writeback",
-            "core_dependency",
         ],
     }
 
 
-def list_papers(root: str | Path) -> Catalog:
+def list_papers(root: str | Path, *, read_current: bool = False) -> Catalog:
     """Return the catalog loaded from ``root``."""
-    return load_catalog(root)
+    return load_catalog(root, read_current=read_current)
 
 
-def load_paper_bundle(paper_dir: str | Path) -> PaperView:
+def load_paper_bundle(paper_dir: str | Path, *, read_current: bool = False) -> PaperView:
     """Return the public reproduction view for one paper directory."""
-    return _load_paper_view(paper_dir)
+    return _load_paper_view(paper_dir, read_current=read_current)
 
 
-def load_paper(paper_dir: str | Path) -> PaperView:
+def load_paper(paper_dir: str | Path, *, read_current: bool = False) -> PaperView:
     """Compatibility alias for :func:`load_paper_bundle`."""
-    return load_paper_bundle(paper_dir)
+    return load_paper_bundle(paper_dir, read_current=read_current)
 
 
-def inspect_bundle(path: str | Path) -> Bundle:
-    """Return stdlib-only inspection metadata for a deposited ``.n4a`` bundle."""
-    return read_bundle(path)
+def inspect_bundle(
+    path: str | Path, *, entrypoint: str | None = None, operation: str | None = None,
+    memory_budget_bytes: int | None = None,
+) -> Bundle:
+    """Return detached current Core/SDK owner evidence without loading fitted objects."""
+    return read_bundle(path, entrypoint=entrypoint, operation=operation, memory_budget_bytes=memory_budget_bytes)
 
 
 def build_methods_section(method_ids: list[str]) -> dict[str, Any]:
@@ -86,14 +89,16 @@ def bibtex(paper_dir: str | Path) -> str:
     return paper_bibtex(load_paper_bundle(paper_dir))
 
 
-def build_repro_page(root: str | Path, out: str | Path, io_wasm: str | Path | None = None) -> Path:
+def build_repro_page(
+    root: str | Path, out: str | Path, io_wasm: str | Path | None = None, *, read_current: bool = False,
+) -> Path:
     """Build the static reproduction site into ``out``."""
-    return build_site(root, out, io_wasm=io_wasm)
+    return build_site(root, out, io_wasm=io_wasm, read_current=read_current)
 
 
-def export_sidecars(paper_dir: str | Path, out: str | Path) -> Path:
+def export_sidecars(paper_dir: str | Path, out: str | Path, *, read_current: bool = False) -> Path:
     """Write one paper's deposit sidecars into ``out/paper/<slug>/`` and return that crate path."""
-    view = _load_paper_view(paper_dir)
+    view = _load_paper_view(paper_dir, read_current=read_current)
     return write_paper_sidecars(view, out)
 
 

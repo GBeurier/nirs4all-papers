@@ -69,7 +69,28 @@ def test_bundle_path_traversal_rejected(tmp_path):
         load_paper(d)
 
 
-def test_demo_resolves_expected(demo_view):
-    assert demo_view.model_step.info.short_name == "PLSRegression"
-    assert demo_view.n_steps == 4
-    assert len(demo_view.references) == 3  # minmax+standard_scaler merged
+def test_current_view_keeps_complete_owner_documents_without_step_projection(current_view):
+    assert current_view.bundle.document("training_declaration").value["steps"]
+    assert current_view.model_step is None
+    assert current_view.n_steps is None
+    assert current_view.steps == []
+    assert len(current_view.references) == 2  # explicit public method_ids only
+    assert current_view.metrics[0].partition == "published synthetic"
+
+
+def test_optional_reader_failure_retains_catalog_entry_and_download(tmp_path, monkeypatch):
+    from nirs4all_papers import model
+    from nirs4all_papers.bundle import ReaderDependencyError
+
+    paper = tmp_path / "papers" / "historical"
+    paper.mkdir(parents=True)
+    (paper / "paper.json").write_text('{"title":"Historical"}')
+    (paper / "model.n4a").write_bytes(b"historical opaque bytes")
+    def unavailable(path):
+        raise ReaderDependencyError("Core is not installed")
+    monkeypatch.setattr(model, "read_bundle", unavailable)
+    view = load_catalog(tmp_path, read_current=True).papers[0]
+    assert view.reading_status == "dependency_unavailable"
+    assert "Core is not installed" in view.reading_detail
+    assert view.bundle is None and view.raw_download_sha256
+    assert view.archive_path.read_bytes() == b"historical opaque bytes"

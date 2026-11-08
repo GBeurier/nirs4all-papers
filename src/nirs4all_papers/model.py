@@ -15,8 +15,8 @@ from typing import Any
 
 import yaml
 
-from .bibliography import Reference, build_bibliography, reference_for, resolve_method
-from .bundle import Bundle, StepInfo, read_bundle
+from .bibliography import Reference, build_bibliography
+from .bundle import Bundle, ReaderDependencyError, StepInfo, raw_file_identity, read_bundle
 from .site.escape import slugify
 
 
@@ -59,12 +59,24 @@ class PaperView:
 
     slug: str
     meta: dict[str, Any]
-    bundle: Bundle
+    bundle: Bundle | None
     steps: list[StepView]
     references: list[Reference]
     replay: dict[str, Any] | None
     bundle_filename: str
     paper_dir: Path
+    archive_path: Path | None = None
+    raw_download_sha256: str = ""
+    archive_byte_length: int = 0
+    reading_status: str = "archive_only"
+    reading_detail: str = "Archive deposit; current reading and execution have not been evaluated."
+
+    @property
+    def document_downloads(self) -> list[tuple[str, bytes]]:
+        """Numbered output names avoid conflating owner paths with OS paths."""
+        if self.bundle is None:
+            return []
+        return [(f"owner-document-{i:04d}.json", doc.raw) for i, doc in enumerate(self.bundle.documents)]
 
     # ── flat metadata accessors ──────────────────────────────────────────
     @property
@@ -139,9 +151,9 @@ class PaperView:
 
     # ── derived ──────────────────────────────────────────────────────────
     @property
-    def n_steps(self) -> int:
+    def n_steps(self) -> int | None:
         """Pipeline steps excluding internal split/cv steps (the scientifically meaningful count)."""
-        return len([s for s in self.steps if s.info.kind != "split"])
+        return len([s for s in self.steps if s.info.kind != "split"]) if self.steps else None
 
     @property
     def model_step(self) -> StepView | None:
@@ -159,7 +171,8 @@ class PaperView:
             ncomp = model.info.params.get("n_components")
             if ncomp is not None:
                 pairs.append((str(ncomp), "components"))
-        pairs.append((str(self.n_steps), "pipeline steps"))
+        if self.n_steps is not None:
+            pairs.append((str(self.n_steps), "pipeline steps"))
         ds = self.dataset
         if ds.get("n_samples"):
             pairs.append((_fmt(ds.get("n_samples")), "samples"))
@@ -270,48 +283,41 @@ def _load_replay(paper_dir: Path, meta: dict[str, Any]) -> dict[str, Any] | None
     return clean
 
 
-def load_paper(paper_dir: str | Path) -> PaperView:
-    """Build a :class:`PaperView` from a ``papers/<slug>/`` directory."""
+def load_paper(paper_dir: str | Path, *, read_current: bool = False) -> PaperView:
+    """Load archive metadata independently of optional current owner inspection."""
     paper_dir = Path(paper_dir)
     meta = _load_metadata(paper_dir)
     slug = slugify(str(meta.get("slug") or paper_dir.name))
-
     bundle_name = str(meta.get("bundle") or "model.n4a")
-    bundle_path = (paper_dir / bundle_name).resolve()
-    if not bundle_path.is_relative_to(paper_dir.resolve()):
+    archive_path = (paper_dir / bundle_name).resolve()
+    if not archive_path.is_relative_to(paper_dir.resolve()):
         raise ValueError(f"{paper_dir.name}: bundle path '{bundle_name}' escapes the paper directory")
-    bundle = read_bundle(bundle_path)
-    # The crate/download always use a flat basename, never a sub-path.
-    bundle_filename = Path(bundle_name).name
-
-    steps: list[StepView] = []
-    used_ids: list[str] = []
-    for info in bundle.steps():
-        method_id = resolve_method(info.short_name, info.raw)
-        if method_id:
-            used_ids.append(method_id)
-        steps.append(StepView(info=info, method_id=method_id, reference=None))
-
-    references, id_to_ref = build_bibliography(used_ids)
-    for sv in steps:
-        if sv.method_id:
-            sv.reference = id_to_ref.get(sv.method_id)
-            own = reference_for(sv.method_id)  # this operator's own entry (for its specific principle)
-            sv.principle = own.principle if own else None
-
+    bundle = None
+    status = "archive_only"
+    detail = "Archive deposit; current reading and execution have not been evaluated."
+    if read_current:
+        try:
+            bundle = read_bundle(archive_path)
+            status, detail = bundle.support, bundle.detail
+        except ReaderDependencyError as error:
+            status, detail = "dependency_unavailable", str(error)
+        except ValueError as error:
+            status, detail = "current_reading_refused", str(error)
+    if bundle is not None:
+        raw_sha, length = bundle.container_sha256, bundle.view["readability"]["byte_length"]
+    else:
+        raw_sha, length = raw_file_identity(archive_path)
+    # Only explicitly supplied citation IDs; never derive methods from V1 names.
+    references, _ = build_bibliography([str(item) for item in _as_list(meta.get("method_ids"))])
     return PaperView(
-        slug=slug,
-        meta=meta,
-        bundle=bundle,
-        steps=steps,
-        references=references,
-        replay=_load_replay(paper_dir, meta),
-        bundle_filename=bundle_filename,
-        paper_dir=paper_dir,
+        slug=slug, meta=meta, bundle=bundle, steps=[], references=references,
+        replay=None, bundle_filename=Path(bundle_name).name, paper_dir=paper_dir,
+        archive_path=archive_path, raw_download_sha256=raw_sha, archive_byte_length=length,
+        reading_status=status, reading_detail=detail,
     )
 
 
-def load_catalog(root: str | Path) -> Catalog:
+def load_catalog(root: str | Path, *, read_current: bool = False) -> Catalog:
     """Discover every ``papers/<slug>/paper.yaml`` under ``root`` and build its view."""
     root = Path(root)
     papers_dir = root / "papers"
@@ -320,7 +326,7 @@ def load_catalog(root: str | Path) -> Catalog:
     if papers_dir.is_dir():
         for child in sorted(papers_dir.iterdir()):
             if child.is_dir() and any((child / n).exists() for n in ("paper.yaml", "paper.yml", "paper.json")):
-                view = load_paper(child)
+                view = load_paper(child, read_current=read_current)
                 if view.slug in seen:
                     raise ValueError(
                         f"slug collision: '{child.name}' and '{seen[view.slug]}' both resolve to slug "

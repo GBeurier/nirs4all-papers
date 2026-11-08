@@ -2,23 +2,24 @@
 """Build the static reproduction-document site: load -> render -> write ``out/``.
 
 Pure rendering over the committed inputs (``papers/<slug>/paper.yaml`` + ``model.n4a``): one HTML page
-per paper plus its deposit sidecars (the bundle, ``pipeline.json``, ``CITATION.cff``,
+per paper plus exact owner documents and its deposit sidecars (the bundle, ``CITATION.cff``,
 ``references.bib``, ``ro-crate-metadata.json``), the landing page, the catalog, and the brand chrome.
 All charts are inline SVG; the replay engine is inline JS; the output is self-contained.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from ..bundle import copy_download, raw_file_identity
+
 if TYPE_CHECKING:
     from ..model import Catalog, PaperView
 
 _ENCODING = {
-    ".n4a": "application/zip",
+    ".n4a": "application/octet-stream",
     ".json": "application/json",
     ".bib": "application/x-bibtex",
     ".cff": "application/x-yaml",
@@ -27,17 +28,16 @@ _ENCODING = {
 
 
 def _file_meta(path: Path) -> dict[str, Any]:
-    data = path.read_bytes()
+    digest, length = raw_file_identity(path)
     return {
-        "name": path.name,
-        "size": len(data),
-        "sha256": hashlib.sha256(data).hexdigest(),
+        "name": path.name, "size": length, "sha256": digest,
         "encodingFormat": _ENCODING.get(path.suffix, "application/octet-stream"),
     }
 
 
+
 def write_paper_sidecars(view: PaperView, out: str | Path) -> Path:
-    """Write the per-paper deposit bundle: .n4a + pipeline.json + CITATION.cff + references.bib + RO-Crate."""
+    """Copy exact archive/owner documents and describe the files actually exported."""
     from .. import provenance
     from ..bibliography import references_to_bibtex
 
@@ -45,18 +45,37 @@ def write_paper_sidecars(view: PaperView, out: str | Path) -> Path:
     crate = out / "paper" / view.slug
     crate.mkdir(parents=True, exist_ok=True)
 
-    # The deposited bundle (for download + replay), copied verbatim.
-    bundle_dst = crate / view.bundle_filename
-    shutil.copy2(view.bundle.path, bundle_dst)
-    # The pipeline definition, lifted out for easy inspection.
-    (crate / "pipeline.json").write_text(json.dumps(view.bundle.pipeline, indent=2, ensure_ascii=False), encoding="utf-8")
-    # Citation metadata.
-    (crate / "CITATION.cff").write_text(provenance.citation_cff(view), encoding="utf-8")
-    (crate / "references.bib").write_text(references_to_bibtex(view.references), encoding="utf-8")
-
-    crate_files = [_file_meta(crate / name) for name in (view.bundle_filename, "pipeline.json", "CITATION.cff", "references.bib")]
-    crate_meta = provenance.ro_crate(view, crate_files)
-    (crate / "ro-crate-metadata.json").write_text(json.dumps(crate_meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    if view.archive_path is None:
+        raise ValueError("archive source is unavailable")
+    copy_download(view.archive_path, crate / view.bundle_filename, view.raw_download_sha256, current=view.bundle)
+    written = [view.bundle_filename]
+    if view.bundle is not None:
+        (crate / "container-manifest.json").write_bytes(view.bundle.manifest_bytes)
+        written.append("container-manifest.json")
+        for name, raw in view.document_downloads:
+            (crate / name).write_bytes(raw)
+            written.append(name)
+    # Explicitly supplied released sidecars are copied verbatim, never recovered
+    # from an unsupported archive or regenerated scientific output.
+    supplied = view.meta.get("archive_sidecars", [])
+    if not isinstance(supplied, list):
+        raise ValueError("archive_sidecars must be a list of relative released file paths")
+    for relative in supplied:
+        source = (view.paper_dir / str(relative)).resolve()
+        if not source.is_relative_to(view.paper_dir.resolve()) or source.name in written:
+            raise ValueError("archive sidecar escapes its directory or conflicts with an output")
+        shutil.copyfile(source, crate / source.name)
+        written.append(source.name)
+    if "CITATION.cff" not in written:
+        (crate / "CITATION.cff").write_text(provenance.citation_cff(view), encoding="utf-8")
+        written.append("CITATION.cff")
+    if "references.bib" not in written:
+        (crate / "references.bib").write_text(references_to_bibtex(view.references), encoding="utf-8")
+        written.append("references.bib")
+    crate_files = [_file_meta(crate / name) for name in written if name != "ro-crate-metadata.json"]
+    if "ro-crate-metadata.json" not in written:
+        crate_meta = provenance.ro_crate(view, crate_files)
+        (crate / "ro-crate-metadata.json").write_text(json.dumps(crate_meta, indent=2, ensure_ascii=False), encoding="utf-8")
     return crate
 
 
@@ -92,7 +111,9 @@ def _copy_brand(root: Path, out: Path) -> None:
             shutil.copy2(src, brand_out / name)
 
 
-def build_site(root: str | Path, out: str | Path, io_wasm: str | Path | None = None) -> Path:
+def build_site(
+    root: str | Path, out: str | Path, io_wasm: str | Path | None = None, *, read_current: bool = False,
+) -> Path:
     """Build the reproduction-document site from ``root`` into ``out`` (regenerated wholesale).
 
     ``io_wasm`` (optional) is a directory holding ``formats/`` and ``io/`` nirs4all-formats /
@@ -124,7 +145,7 @@ def build_site(root: str | Path, out: str | Path, io_wasm: str | Path | None = N
 
     io_base = _copy_io_wasm(io_wasm, out) if io_wasm else ""
 
-    catalog = load_catalog(root)
+    catalog = load_catalog(root, read_current=read_current)
 
     (out / "index.html").write_text(pages.render_index(catalog), encoding="utf-8")
     (out / "catalog.html").write_text(pages.render_catalog(catalog), encoding="utf-8")

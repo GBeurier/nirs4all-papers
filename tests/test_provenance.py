@@ -24,10 +24,10 @@ def test_license_id_mapping():
     assert _license_id("see publisher") == "#manuscript-license"
 
 
-def test_citation_cff_valid_yaml_and_every_reference_has_authors(demo_view):
+def test_citation_cff_valid_yaml_and_every_reference_has_authors(current_view):
     # force in a reference whose seed has no authors (gaussian_filter) to lock the CFF fallback
-    demo_view.references[:], _ = build_bibliography(["gaussian_filter", "pls"])
-    cff = provenance.citation_cff(demo_view)
+    current_view.references[:], _ = build_bibliography(["gaussian_filter", "pls"])
+    cff = provenance.citation_cff(current_view)
     data = yaml.safe_load(cff)
     assert data["cff-version"] == "1.2.0"
     assert data["authors"]
@@ -35,22 +35,27 @@ def test_citation_cff_valid_yaml_and_every_reference_has_authors(demo_view):
         assert ref.get("authors"), "every CFF reference must carry authors"
 
 
-def test_citation_cff_no_fake_version(demo_view):
+def test_citation_cff_no_fake_version(current_view):
     # version should not be the nirs4all library version
-    cff = yaml.safe_load(provenance.citation_cff(demo_view))
-    assert cff.get("version") != demo_view.bundle.nirs4all_version
-    # the bundle fingerprint is exposed as an identifier instead
+    cff = yaml.safe_load(provenance.citation_cff(current_view))
+    assert cff.get("version") is None
     ids = cff.get("identifiers", [])
-    assert any("nirs4all-bundle:" in str(i.get("value", "")) for i in ids)
+    assert any("n4a-container-sha256:" in str(item.get("value", "")) for item in ids)
+    assert not any("nirs4all-bundle:" in str(item.get("value", "")) for item in ids)
+    current_view.meta["provenance"] = {"bundle_fingerprint": "historical-value"}
+    historical = yaml.safe_load(provenance.citation_cff(current_view))
+    assert any(item.get("value") == "nirs4all-bundle:historical-value" for item in historical["identifiers"])
 
 
-def test_ro_crate_main_entity_in_haspart(demo_view):
-    crate_files = [{"name": "pipeline.json", "size": 1, "sha256": "x", "encodingFormat": "application/json"}]
-    crate = provenance.ro_crate(demo_view, crate_files)
+def test_ro_crate_main_entity_in_haspart(current_view):
+    crate_files = [{"name": "model.n4a", "size": 1, "sha256": "x", "encodingFormat": "application/json"}]
+    crate = provenance.ro_crate(current_view, crate_files)
     json.dumps(crate)  # serializable
     root = next(e for e in crate["@graph"] if e.get("@id") == "./")
-    assert root["mainEntity"]["@id"] == "pipeline.json"
-    assert {"@id": "pipeline.json"} in root["hasPart"]
+    assert root["mainEntity"]["@id"] == "model.n4a"
+    assert {"@id": "model.n4a"} in root["hasPart"]
     assert not any(e.get("@id") == "#pipeline" for e in crate["@graph"])
-    pj = next(e for e in crate["@graph"] if e.get("@id") == "pipeline.json")
-    assert "ComputationalWorkflow" in pj["@type"]
+    pj = next(e for e in crate["@graph"] if e.get("@id") == "model.n4a")
+    assert pj["@type"] == "File"
+    assert "programmingLanguage" not in pj
+    assert all(".predict(" not in text for _, text in provenance.reproduction_commands(current_view))
