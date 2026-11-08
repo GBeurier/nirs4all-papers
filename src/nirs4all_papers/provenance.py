@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: CeCILL-2.1 OR AGPL-3.0-or-later
 """Emit the machine-readable deposit sidecars: ``CITATION.cff`` and an RO-Crate ``ro-crate-metadata``.
 
-A nirs4all ``.n4a`` is produced by the Python library (not by ``dag-ml``), so a published run rarely
-carries a ``dag-ml`` research-provenance package. We therefore *synthesize* the RO-Crate here —
-including the author / license / citation entities that ``dag-ml`` deliberately does not emit — from
-the bundle fingerprints + ``paper.yaml``. RO-Crate JSON-LD is designed to be extended this way.
+Publisher metadata describes the exact exported files. Owner JSON remains intact;
+readability never implies scientific execution or a reconstructed workflow.
 """
 from __future__ import annotations
 
@@ -127,10 +125,19 @@ def citation_cff(paper: PaperView) -> str:
         lines.append("  - type: doi")
         lines.append(f"    value: {_yaml_str(paper.doi)}")
         lines.append('    description: "Paper DOI"')
-    lines.append("  - type: other")
-    lines.append(f"    value: {_yaml_str('nirs4all-bundle:' + paper.bundle.fingerprint)}")
-    _fp_desc = "Reproducibility bundle fingerprint (SHA-256), produced with nirs4all " + paper.bundle.nirs4all_version
-    lines.append(f"    description: {_yaml_str(_fp_desc)}")
+    if paper.raw_download_sha256:
+        lines.append("  - type: other")
+        lines.append(f"    value: {_yaml_str('sha256-file:' + paper.raw_download_sha256)}")
+        lines.append('    description: "Exact downloadable file SHA-256; not scientific identity"')
+    if paper.bundle is not None:
+        lines.append("  - type: other")
+        lines.append(f"    value: {_yaml_str('n4a-container-sha256:' + paper.bundle.container_sha256)}")
+        lines.append('    description: "Core V1 container identity"')
+    historical = paper.provenance.get("bundle_fingerprint")
+    if historical:
+        lines.append("  - type: other")
+        lines.append(f"    value: {_yaml_str('nirs4all-bundle:' + str(historical))}")
+        lines.append('    description: "Historical deposited fingerprint; retained as supplied provenance"')
     keywords = paper.keywords
     if keywords:
         lines.append("keywords:")
@@ -191,10 +198,10 @@ def ro_crate(paper: PaperView, crate_files: list[dict[str, Any]]) -> dict[str, A
         "@id": "./",
         "@type": "Dataset",
         "name": f"Reproduction bundle — {paper.title}",
-        "description": paper.abstract or "nirs4all reproduction document and pipeline replay bundle.",
-        "mainEntity": {"@id": "pipeline.json"},
+        "mainEntity": {"@id": paper.bundle_filename},
         "hasPart": [{"@id": f["name"]} for f in crate_files],
-        "dagml:nirs4all_version": paper.bundle.nirs4all_version,
+        "description": paper.abstract or "Archive publication; no scientific execution is performed.",
+        "readingStatus": paper.reading_status,
     }
     if author_refs:
         root["author"] = author_refs
@@ -253,32 +260,9 @@ def ro_crate(paper: PaperView, crate_files: list[dict[str, Any]]) -> dict[str, A
             "encodingFormat": f.get("encodingFormat", "application/octet-stream"),
             "sha256": f.get("sha256"),
         }
-        if f["name"] == "pipeline.json":
-            entity["@type"] = ["File", "SoftwareSourceCode", "ComputationalWorkflow"]
-            entity["programmingLanguage"] = "Python"
-            entity["softwareVersion"] = f"nirs4all {paper.bundle.nirs4all_version}"
-            entity["dagml:pipeline_uid"] = paper.bundle.pipeline_uid
-            entity["dagml:bundle_fingerprint"] = paper.bundle.fingerprint
-            entity["step"] = [_step_ld(sv) for sv in paper.steps]
         graph.append(entity)
 
     return {"@context": _RO_CRATE_CONTEXT, "@graph": graph}
-
-
-def _step_ld(step_view: Any) -> dict[str, Any]:
-    info = step_view.info
-    entity: dict[str, Any] = {
-        "@type": "HowToStep",
-        "position": info.index,
-        "name": info.short_name,
-        "dagml:operator": info.raw,
-        "dagml:role": info.kind,
-    }
-    if info.params:
-        entity["dagml:params"] = info.params
-    if step_view.reference and step_view.reference.doi:
-        entity["citation"] = {"@id": f"https://doi.org/{step_view.reference.doi}"}
-    return entity
 
 
 def _yaml_str(value: Any) -> str:
@@ -308,15 +292,5 @@ def paper_bibtex(paper: PaperView) -> str:
 
 
 def reproduction_commands(paper: PaperView) -> list[tuple[str, str]]:
-    """A copy-pasteable reproduction snippet (lines of ``(css_class, text)``)."""
-    version = paper.bundle.nirs4all_version
-    spec = f'"nirs4all=={version}"' if version and version != "—" else "nirs4all"
-    return [
-        ("c", "# 1. install the exact library version this bundle was produced with"),
-        ("k", f"pip install {spec}"),
-        ("", ""),
-        ("c", "# 2. re-run the published pipeline on your own spectra X (n_samples x n_wavelengths)"),
-        ("", "from nirs4all.pipeline.bundle import BundleLoader"),
-        ("", f'bundle = BundleLoader("{paper.bundle_filename}")'),
-        ("", "y_pred = bundle.predict(X)   # full preprocessing + CV ensemble + inverse target transform"),
-    ]
+    """No execution recipe is inferred from archive readability."""
+    return [("c", "# Papers reads documents only; use the deposit's separately supplied frozen reproduction instructions.")]

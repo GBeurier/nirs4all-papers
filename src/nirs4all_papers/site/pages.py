@@ -6,14 +6,15 @@ Pure formatting over the :class:`~nirs4all_papers.model.PaperView` view models v
 """
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 from .. import __version__, provenance
 from ..model import Catalog, PaperView
-from . import assets
 from . import components as C
 from .charts import spectra_preview
-from .escape import Safe, cell, esc, inline_json, locator_link, num, safe_url
+from .escape import cell, esc, inline_json, locator_link, num, safe_url
 from .theme import SITE_URL, page
 
 # Build date stamp (constant within a build process, so output stays idempotent per run).
@@ -26,21 +27,21 @@ BUILD_STAMP = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 def _index_kpis(catalog: Catalog) -> list[tuple[str, str]]:
     methods = {r.id for p in catalog.papers for r in p.references}
     datasets = {p.dataset.get("name") for p in catalog.papers if p.dataset.get("name")}
-    steps = sum(len([s for s in p.steps if s.info.kind != "split"]) for p in catalog.papers)
-    replays = sum(1 for p in catalog.papers if p.replay)
+    documents = sum(len(p.bundle.documents) for p in catalog.papers if p.bundle is not None)
+    readable = sum(p.reading_status == "documents_readable" for p in catalog.papers)
     return [
         (num(len(catalog.papers)), "papers"),
         (num(len(methods)), "methods cited"),
         (num(len(datasets)), "datasets"),
-        (num(steps), "pipeline steps"),
-        (num(replays), "live replays"),
+        (num(documents), "owner documents"),
+        (num(readable), "current document reads"),
     ]
 
 
 def _how_it_works() -> str:
     cards = [
-        ("&#129513;", "Methods &amp; bibliography", "Every preprocessing step and model is named, parametrised, and cross-referenced to the literature — a real reference list, auto-built from the pipeline."),
-        ("&#9654;", "Live in-browser replay", "Re-run the published pipeline on the included dataset — leakage-safe cross-validation, parity and residual plots recomputed in your browser, no install."),
+        ("&#129513;", "Methods &amp; bibliography", "Complete owner documents and explicitly supplied citations remain available without reconstructing pipeline steps."),
+        ("&#9654;", "Read-only publication", "Current reading does not execute a model. Historical approximate-JS companions retain their separate labels."),
         ("&#128230;", "Deposit-ready sidecars", "Each paper ships CITATION.cff, BibTeX, an RO-Crate, and the deposited <code>.n4a</code> — fingerprinted and citable."),
     ]
     items = "".join(
@@ -60,19 +61,19 @@ def render_index(catalog: Catalog) -> str:
 {C.hero(len(catalog.papers), len(methods))}
 <section class="section section-paper">
   <div class="container">
-    {C.section_head("The archive at a glance", "Reproducible by <em>construction</em>")}
+    {C.section_head("The archive at a glance", "Deposited <em>evidence</em>")}
     {C.kpi_strip(_index_kpis(catalog))}
   </div>
 </section>
 <section class="section section-aurora">
   <div class="container">
-    {C.section_head("How it works", "From a <em>.n4a</em> to a paper", "Point the publisher at a deposited bundle and a short metadata file; it emits the reproduction document, the bibliography, the replay, and the deposit sidecars.")}
+    {C.section_head("How it works", "From a <em>.n4a</em> to a paper", "Point the publisher at a deposited bundle and a short metadata file; it preserves archive downloads and publishes available owner documents and citation sidecars.")}
     {_how_it_works()}
   </div>
 </section>
 <section class="section">
   <div class="container" style="text-align:center">
-    {C.section_head("Browse", "Every <em>published</em> pipeline", "Open a paper to read its methods, see its scores, and re-run it live.")}
+    {C.section_head("Browse", "Every <em>published</em> pipeline", "Open a deposit to read its public metadata, published scores and available owner documents.")}
     <a class="btn btn-primary" href="catalog.html">Open the paper archive &rarr;</a>
   </div>
 </section>
@@ -170,7 +171,7 @@ def _paper_badges(view: PaperView) -> str:
         badges.append(C.badge(str(view.year), "neutral"))
     if view.doi:
         badges.append(C.badge(f"DOI {view.doi}", "info"))
-    badges.append(C.badge(f"nirs4all {view.bundle.nirs4all_version}", "neutral"))
+    badges.append(C.badge(view.reading_status, "neutral"))
     return "".join(badges)
 
 
@@ -180,22 +181,19 @@ def _protocol_panel(view: PaperView) -> str:
         ("Split", proto.get("split")),
         ("Cross-validation", proto.get("cv")),
         ("Scoring metric", proto.get("metric")),
-        ("Fold strategy", proto.get("fold_strategy") or view.bundle.manifest.get("fold_strategy")),
+        ("Fold strategy", proto.get("fold_strategy")),
     ]
-    if view.bundle.fold_weights:
-        weights = ", ".join(f"fold {k}: {num(v)}" for k, v in sorted(view.bundle.fold_weights.items()))
-        rows.append(("Fold weights", weights))
     body = "".join(f"<tr><th>{esc(k)}</th><td>{esc(v)}</td></tr>" for k, v in rows if v)
     if not body:
         body = '<tr><td colspan="2" class="dl-note">Protocol not recorded — add it to paper.yaml.</td></tr>'
-    return f'<section class="panel"><h2>Protocol</h2><div class="panel-body"><table class="kv"><tbody>{body}</tbody></table></div></section>'
+    return f'<section class="panel"><h2>Protocol <span class="h2-tag">as published</span></h2><div class="panel-body"><table class="kv"><tbody>{body}</tbody></table></div></section>'
 
 
 def _results_panel(view: PaperView) -> str:
     if not view.metrics:
         return (
             '<section class="panel"><h2>Results</h2><div class="panel-body">'
-            '<p class="dl-note">No published scores recorded in paper.yaml. The live replay below recomputes scores from the included dataset.</p></div></section>'
+            '<p class="dl-note">No published scores recorded in paper.yaml. Missing owner score evidence is not reconstructed.</p></div></section>'
         )
     def _cell(m: object) -> str:
         part = f'<div class="m-p">{esc(m.partition)}</div>' if m.partition else ""  # type: ignore[attr-defined]
@@ -227,77 +225,54 @@ def _dataset_panel(view: PaperView) -> str:
     return f'<section class="panel"><h2>Dataset</h2><div class="panel-body">{inner}</div></section>'
 
 
-def _methods_narrative(view: PaperView) -> str:
-    def cite(sv) -> str:
-        if sv.reference and sv.reference.number:
-            return f'<sup><a href="#ref-{sv.reference.number}">[{sv.reference.number}]</a></sup>'
-        return ""
-
-    pre = [s for s in view.steps if s.info.kind == "preprocessing"]
-    tgt = next((s for s in view.steps if s.info.kind == "target"), None)
-    model = view.model_step
-    paras: list[str] = []
-    if pre:
-        phrases = ", then ".join(
-            f"{esc(s.reference.label if s.reference else s.info.short_name)}{cite(s)}" for s in pre
-        )
-        paras.append(f"<p>Spectra were preprocessed by {phrases}.</p>")
-    if tgt:
-        paras.append(f"<p>The regression target was {esc(tgt.reference.label if tgt.reference else tgt.info.short_name)}{cite(tgt)} prior to modelling.</p>")
-    if model:
-        ncomp = model.info.params.get("n_components")
-        lv = f" with {ncomp} latent variables" if ncomp is not None else ""
-        proto = view.protocol.get("cv")
-        proto_txt = f", evaluated by {esc(proto)}" if proto else ""
-        paras.append(
-            f"<p>A {esc(model.reference.label if model.reference else model.info.short_name)}{cite(model)} model{lv} was then calibrated{proto_txt}. "
-            "The fitted pipeline and per-fold artifacts are bundled in the deposited <code>.n4a</code>.</p>"
-        )
-    if not paras:
-        return ""
-    return f'<section class="panel wide"><h2>Methods</h2><div class="panel-body methods-narrative">{"".join(paras)}</div></section>'
-
-
 def _provenance_panel(view: PaperView, rel: str) -> str:
-    b = view.bundle
     rows: list[tuple[str, object]] = [
-        ("Pipeline UID", Safe(f"<code>{esc(b.pipeline_uid)}</code>") if b.pipeline_uid else None),
-        ("Bundle fingerprint", Safe(f"<code>{esc(b.fingerprint[:24])}…</code>")),
-        ("nirs4all version", b.nirs4all_version),
-        ("Created", b.manifest.get("created_at")),
-        ("Source type", b.manifest.get("source_type")),
+        ("Reading status", view.reading_status), ("Reading detail", view.reading_detail),
+        ("Raw downloadable file SHA-256", view.raw_download_sha256),
+        ("Execution", "Not evaluated; Papers does not load fitted objects"),
     ]
-    prov = view.provenance
-    if prov.get("source_repo"):
-        commit = f" @ {esc(prov.get('source_commit'))}" if prov.get("source_commit") else ""
-        rows.append(("Source", Safe(f"{esc(prov.get('source_repo'))}{commit}")))
-    kv = "".join(f"<tr><th>{esc(k)}</th><td>{cell(v)}</td></tr>" for k, v in rows if v)
-
-    file_rows = "".join(
-        f'<tr><td><code>{esc(f.name)}</code></td><td class="num">{num(f.size)}</td><td><code>{esc(f.sha256[:12])}…</code></td></tr>'
-        for f in sorted(b.files, key=lambda f: f.name)
-    )
-    file_table = (
-        '<div class="table-scroll" style="margin-top:14px"><table class="data"><thead><tr><th>File</th>'
-        '<th class="num">Bytes</th><th>SHA-256</th></tr></thead><tbody>' + file_rows + "</tbody></table></div>"
-    )
-
-    commands = _copyable_code(C.code_block(provenance.reproduction_commands(view)), "repro-cmd")
-    slug = view.slug
-    downloads = (
-        '<div class="dl-row" style="margin-top:16px">'
-        f'<a class="dl-btn" href="{slug}/{esc(view.bundle_filename)}">{esc(view.bundle_filename)} <span class="ext">.n4a</span></a>'
-        f'<a class="dl-btn" href="{slug}/pipeline.json">pipeline.json</a>'
-        f'<a class="dl-btn" href="{slug}/CITATION.cff">CITATION.cff</a>'
-        f'<a class="dl-btn" href="{slug}/references.bib">references.bib</a>'
-        f'<a class="dl-btn" href="{slug}/ro-crate-metadata.json">ro-crate-metadata.json</a>'
-        "</div>"
-    )
+    if view.bundle is not None:
+        rows.extend([("Core container SHA-256", view.bundle.container_sha256),
+                     ("Core manifest SHA-256", view.bundle.manifest_sha256), ("Owner profile", view.bundle.profile)])
+    if view.provenance.get("bundle_fingerprint"):
+        rows.append(("Historical fingerprint (as supplied)", view.provenance["bundle_fingerprint"]))
+    if view.provenance.get("source_repo"):
+        rows.append(("Source", str(view.provenance["source_repo"]) + " @ " + str(view.provenance.get("source_commit", ""))))
+    kv = "".join(f"<tr><th>{esc(key)}</th><td>{esc(value)}</td></tr>" for key, value in rows)
+    names = [view.bundle_filename, "CITATION.cff", "references.bib", "ro-crate-metadata.json"]
+    if view.bundle is not None:
+        names.append("container-manifest.json")
+        names.extend(name for name, _ in view.document_downloads)
+    supplied = view.meta.get("archive_sidecars", [])
+    if isinstance(supplied, list):
+        names.extend(Path(str(name)).name for name in supplied)
+    downloads = "".join(f'<a class="dl-btn" href="{esc(view.slug)}/{esc(name)}">{esc(name)}</a>' for name in dict.fromkeys(names))
     return (
-        '<section class="panel wide"><h2>Provenance &amp; reproduction<span class="h2-tag">fingerprinted</span></h2>'
-        f'<div class="panel-body"><table class="kv"><tbody>{kv}</tbody></table>{file_table}'
-        f'<div style="margin-top:18px">{commands}</div>{downloads}</div></section>'
+        '<section class="panel wide"><h2>Provenance &amp; downloads</h2>'
+        f'<div class="panel-body"><table class="kv"><tbody>{kv}</tbody></table><div class="dl-row">{downloads}</div>'
+        '<p>Raw historical copies do not establish current admission. Owner documents are read-only evidence. '
+        'Use separately supplied frozen reproduction instructions.</p></div></section>'
     )
+
+
+def _owner_documents(view: PaperView) -> str:
+    parts = [f'<p>{esc(view.reading_detail)}</p>']
+    if view.bundle is not None:
+        parts.append('<details><summary>Core manifest and owner identities</summary><pre>'
+                     + esc(view.bundle.manifest_bytes.decode("utf-8")) + '</pre></details>')
+        parts.append('<details><summary>Owner inspection scope</summary><pre>'
+                     + esc(json.dumps(view.bundle.owner_view, ensure_ascii=False, indent=2)) + '</pre></details>')
+        for (name, _), document in zip(view.document_downloads, view.bundle.documents, strict=True):
+            parts.append(
+                f'<h3>{esc(document.role)}</h3><p>Owner member: <code>{esc(document.member if document.member is not None else "not exposed by the owner document API")}</code></p>'
+                f'<p><a href="{esc(view.slug)}/{esc(name)}">Download exact owner JSON</a></p>'
+                f'<pre>{esc(document.raw.decode("utf-8"))}</pre>'
+            )
+        roles = {document.role for document in view.bundle.documents}
+        if view.bundle.profile == "nirs4all.python-host" and "training_declaration" not in roles:
+            parts.append('<p>Original SDK training declaration: absent; not reconstructed from prediction labels or fitted objects.</p>')
+        parts.append('<p>Score context is shown only where carried in the complete owner documents; absent scores are not inferred.</p>')
+    return '<section class="panel wide"><h2>Owner documents</h2><div class="panel-body">' + "".join(parts) + '</div></section>'
 
 
 def _copyable_code(codeblock_html: str, pre_id: str) -> str:
@@ -401,11 +376,7 @@ def render_paper(view: PaperView, io_wasm_base: str = "") -> str:
     def _inject(pid: str, html: str) -> str:
         return html.replace('class="panel', f'id="{pid}" class="panel-anchor ', 1) if html.strip() else html
 
-    pipeline_panel = _inject(
-        "pipeline",
-        f'<section class="panel wide"><h2>Pipeline<span class="h2-tag">{view.n_steps} steps</span></h2>'
-        f'<div class="panel-body">{C.pipeline_steps(view, rel)}</div></section>',
-    )
+    pipeline_panel = _inject("pipeline", _owner_documents(view))
     bib_panel = _inject(
         "bibliography",
         f'<section class="panel wide"><h2>Bibliography<span class="h2-tag">{len(view.references)} references</span></h2>'
@@ -416,10 +387,12 @@ def render_paper(view: PaperView, io_wasm_base: str = "") -> str:
     )
 
     entries = [
-        ("pipeline", "Pipeline", pipeline_panel),
+        ("pipeline", "Owner documents", pipeline_panel),
         ("results", "Protocol &amp; results", results_grid),
-        ("replay", "Live replay", _inject("replay", assets.replay_panel(view, rel, io_wasm_base))),
-        ("methods", "Methods", _inject("methods", _methods_narrative(view))),
+        ("replay", "Historical companions", _inject("replay",
+            '<section class="panel"><h2>Historical companions</h2><div class="panel-body">'
+            '<p>Current document reading does not run the approximate JS replay. The approximate reference is '
+            'not shown on this page; no native parity is claimed.</p></div></section>')),
         ("bibliography", "Bibliography", bib_panel),
         ("license", "Licensing", _inject("license", _license_panel(view))),
         ("provenance", "Provenance", _inject("provenance", _provenance_panel(view, rel))),
