@@ -7,33 +7,43 @@ import os
 import shutil
 import subprocess
 import zipfile
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 from nirs4all_papers.provider import export_sidecars, load_paper_bundle
+from tests.conftest import write_sdk_paper
 
 PAPERS_ROOT = Path(__file__).resolve().parents[2]
 WORKSPACE_ROOT = PAPERS_ROOT.parent
 REPOSITORY_ROOT = Path(os.environ.get("NIRS4ALL_REPOSITORY_ROOT", WORKSPACE_ROOT / "nirs4all-repository")).expanduser().resolve()
 REPOSITORY_SRC = REPOSITORY_ROOT / "src"
-DEMO_PAPER_DIR = PAPERS_ROOT / "papers" / "2026-pls-nirs-demo"
 
 
 def test_paper_export_reopens_as_repository_refit_handoff(artifacts_dir: Path) -> None:
     pipeline_id = "paper_pls_nirs_refit"
 
-    paper = load_paper_bundle(DEMO_PAPER_DIR)
+    # Current owner-written synthetic transport, not a deposited model/science run.
+    paper_dir = write_sdk_paper(artifacts_dir / "paper-input", training={"steps": [
+        {"class": "sklearn.preprocessing.MinMaxScaler", "params": {"feature_range": [0, 1]}},
+        {"y_processing": {"class": "sklearn.preprocessing.StandardScaler"}},
+        {"model": {"class": "sklearn.cross_decomposition.PLSRegression", "params": {"n_components": 2}}},
+    ]})
+    paper = load_paper_bundle(paper_dir, read_current=True)
+    assert paper.reading_status == "documents_readable", paper.reading_detail
     export_root = _fresh_dir(artifacts_dir / "paper-export")
     repo_root = _fresh_dir(artifacts_dir / "repository-catalog")
 
-    crate = export_sidecars(DEMO_PAPER_DIR, export_root)
+    crate = export_sidecars(paper_dir, export_root, read_current=True)
     zip_path = _zip_tree(export_root, artifacts_dir / "paper-export.zip")
 
     python_reopen = _load_python_reopen_result(artifacts_dir)
     refit_recipe = _refit_recipe_from_python_reopen(python_reopen) if python_reopen else _refit_recipe_from_paper(paper)
+    training_filename = next(name for (name, _), doc in zip(paper.document_downloads, paper.bundle.documents, strict=True)
+                             if doc.role == "training_declaration")
     fingerprints = {
         "paper_bundle_sha256": _sha256(crate / paper.bundle_filename),
-        "paper_pipeline_sha256": _sha256(crate / "pipeline.json"),
+        "paper_pipeline_sha256": _sha256(crate / training_filename),
         "paper_export_zip_sha256": _sha256(zip_path),
     }
     if python_reopen is not None:
@@ -140,20 +150,27 @@ def _repository_python() -> Path:
     raise AssertionError("no Python 3.11 interpreter found for nirs4all-repository provider APIs")
 
 
+class UnsupportedTrainingRecipeError(ValueError):
+    """Owner inspection carried no lossless Repository training declaration."""
+
+
 def _refit_recipe_from_paper(paper: Any) -> dict[str, Any]:
-    steps: list[dict[str, Any]] = []
-    for step_view in paper.steps:
-        info = step_view.info
-        if info.kind == "split" or not info.reproducible:
-            continue
-        key = "y_processing" if info.kind == "target" else "class"
-        record: dict[str, Any] = {key: info.raw}
-        if info.params:
-            record["params"] = dict(info.params)
-        steps.append(record)
-    if not steps:
-        raise AssertionError(f"paper {paper.slug} has no reproducible steps for a repository refit recipe")
-    return {"name": f"{paper.slug} refit recipe", "pipeline": steps}
+    supplied = paper.meta.get("repository_refit_recipe")
+    if supplied is not None:
+        if not isinstance(supplied, dict) or not isinstance(supplied.get("pipeline"), list) or not supplied["pipeline"]:
+            raise UnsupportedTrainingRecipeError("supplied repository_refit_recipe is not a complete pipeline object")
+        return deepcopy(supplied)
+    declaration = paper.bundle.document("training_declaration") if paper.bundle is not None else None
+    if declaration is None or not isinstance(declaration.value, dict):
+        raise UnsupportedTrainingRecipeError("original training declaration is absent; prediction config is not a refit recipe")
+    recipe = declaration.value
+    # Repository normalize_nirs4all_steps accepts exactly one of steps/pipeline.
+    # The handoff harness uses pipeline. Rename that top-level alias only and
+    # retain every nested field, splitter, option, target and scalar unchanged.
+    present = [key for key in ("steps", "pipeline") if key in recipe]
+    if len(present) != 1 or not isinstance(recipe[present[0]], list) or not recipe[present[0]]:
+        raise UnsupportedTrainingRecipeError("training declaration has no unambiguous complete step list")
+    return {("pipeline" if key == "steps" else key): deepcopy(value) for key, value in recipe.items()}
 
 
 def _load_python_reopen_result(artifacts_dir: Path) -> dict[str, Any] | None:

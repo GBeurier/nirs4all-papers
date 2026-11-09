@@ -63,30 +63,57 @@ data that cannot be redistributed.
 
 ## Reproduction-document publisher
 
-`n4a-papers` turns a deposited `.n4a` bundle plus a short `paper.yaml` into a self-contained
-reproduction page — the exact pipeline, a bibliography for every method, the protocol and scores, a
-**live in-browser replay** that re-runs the pipeline, and deposit sidecars (`CITATION.cff`, BibTeX,
-RO-Crate). It builds a static site for [papers.nirs4all.org](https://papers.nirs4all.org).
+`n4a-papers` publishes public archive metadata and byte-identical downloads. Optional current
+reading delegates V1 transport/inventory and native Package2/3 admission to Core; SDK-host serialized
+JSON inspection belongs to the SDK. Complete owner documents are published as escaped text and exact
+bytes, including distinct original training declarations and cosmetic prediction configurations.
+No fitted objects are loaded and no metric, pipeline or scientific identity is reconstructed.
+
+The Python 3.10 base requires PyYAML only and can publish historical raw downloads without admitting
+them to the current reader. The optional `current-reader` (Core) and `sdk-host-reader` (SDK) extras
+require Python 3.11 through their owners. Candidate floors Core >=0.5.0,<0.6 and SDK >=1.4.16,<2 must
+be used with the matching qualified native wheel/SDK source cohort; they are not claims about every
+published artifact with those labels.
 
 ```bash
-pip install nirs4all-papers     # the publisher CLI (or: pip install -e . from a checkout)
-n4a-papers build --out site     # papers/*/  →  ./site  (open site/index.html)
+n4a-papers build . --out <dedicated-output>                 # archive-only
+n4a-papers build . --out <dedicated-output> --read-current  # optional current inspection
+n4a-papers check <public-paper-directory> --read-current
 ```
 
-See [`docs/REPRODUCTION_PUBLISHER.md`](docs/REPRODUCTION_PUBLISHER.md) for the design and
-[`papers/README.md`](papers/README.md) for the per-paper bundle layout.
+Missing optional readers and unsupported/corrupt transport have distinct visible statuses and do not
+remove catalog entries. Downloads preserve original bytes and URLs. Raw historical copies are not
+current admission. Native/SDK documents retain their own identities and complete available score
+context; depositor metrics are separately labelled **as published**. Missing training recipes or
+scores remain absent. Unknown foreign content stays inventory-only. Readability is not executability.
+
+Historical approximate-JS companions retain their separate labels and frozen bytes. Current read
+views do not execute that replay or claim native parity. No source archive or generated `site/` is
+rewritten by reading. Builds retain the output marker and refuse to wipe unmarked directories.
+
+## Shared UI presentation
+
+Paper pages use the actual UI.2 `StatTile` export for a compact reading/identity summary and
+**as published** result cards. A partition filter changes only the displayed cards; it does not
+select, rank or recompute scores. Reading and execution remain distinct, with execution explicitly
+**Not evaluated**. Original downloads, full owner documents and complete static results remain
+accessible without JavaScript. All enhancement assets are local; the existing site chrome is separate.
+
+The Python package ships prebuilt resources under `data/ui/`. The installed builder does not call or
+look for Node, and an unstaged source checkout retains static-only publication. Maintainer-only
+staging uses `ui/build.mjs`, the exact accepted UI archive and an explicit existing Web dependency
+cohort, without an npm install or UI rebuild. See the
+[presentation staging instructions](docs/REPRODUCTION_PUBLISHER.md#shared-ui-presentation-staging).
 
 ## Provider/plugin facade
 
-For core/UI/provider clients, `nirs4all-papers` also exposes a thin first-party facade in
-`nirs4all_papers.provider`. It stays archive-local and write-bounded:
+`nirs4all_papers.provider` exposes `list_papers`, `load_paper`, `load_paper_bundle`, `inspect_bundle`,
+`build_methods_section`, `citation` and `bibtex`, plus explicit local `build_repro_page`/`export_sidecars`.
+Catalog/view/build/export calls accept `read_current=False`; `inspect_bundle` always uses the actual
+current owner reader. The facade does not execute, upload or write back to other stores.
 
-- reads: `list_papers`, `load_paper`, `load_paper_bundle`, `inspect_bundle`,
-  `build_methods_section`, `citation`, `bibtex`;
-- explicit local output only: `build_repro_page`, `export_sidecars`.
-
-The facade does not execute pipelines, upload artifacts, or write back into repository, datasets, or
-benchmark stores.
+See [publisher contract](docs/REPRODUCTION_PUBLISHER.md) and the existing contributor/quality-gate
+commands. The narrow publisher checks and CI-equivalent provider/coverage gate remain distinct.
 
 ## License
 

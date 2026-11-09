@@ -1,0 +1,25 @@
+{
+  "source_repository": "nirs4all-core",
+  "license": "CECILL-2.1 OR AGPL-3.0-or-later",
+  "origin_note": "Unchanged public DAG RolePipeline transport witnesses identified in bindings/rust/nirs4all/tests/native_package_transport.rs. Byte reuse only; no fit, execution, numerical qualification or generated model in Papers.",
+  "files": [
+    {
+      "file": "training_outcome.json",
+      "source": "bindings/rust/nirs4all/tests/fixtures/native_package_transport_v1/training_outcome.json",
+      "sha256": "41b7de234d2a760e75c9fe43a03a0ed147eca679dc2cc830f072659a9b3ee1f1",
+      "byte_length": 39799
+    },
+    {
+      "file": "predictor_package.json",
+      "source": "bindings/rust/nirs4all/tests/fixtures/native_package_transport_v1/predictor_package.json",
+      "sha256": "66169d521d94d5f74361f144934828ded0851b0f63ccadec43d05d0568b8c4e9",
+      "byte_length": 31287
+    },
+    {
+      "file": "child_refit_v3.json",
+      "source": "bindings/rust/nirs4all/tests/fixtures/native_package_transport_v1/child_refit_v3.json",
+      "sha256": "e220512a80f8c5e8acc5698d62f46f99d41e7a6c62d1c9c8eb6bda43018bd25a",
+      "byte_length": 28619
+    }
+  ]
+}

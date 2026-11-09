@@ -22,11 +22,11 @@ def _cmd_build(args: argparse.Namespace) -> int:
     if not (root / "papers").is_dir():
         print(f"error: no papers/ directory under {root.resolve()} — is this the repository root?", file=sys.stderr)
         return 1
-    out = build_site(root, args.out, io_wasm=args.io_wasm)
+    out = build_site(root, args.out, io_wasm=args.io_wasm, read_current=args.read_current)
     papers = list((out / "paper").glob("*.html"))
     print(f"Built {len(papers)} paper page(s) → {out}")
     if args.io_wasm:
-        print("  + nirs4all-formats/io WASM bundled → 'run on your own data' accepts vendor files")
+        print("  + optional owner WASM assets copied; document inspection does not execute them")
     print(f"  open {out / 'index.html'}")
     return 0
 
@@ -47,17 +47,14 @@ def _cmd_new(args: argparse.Namespace) -> int:
 
 def _cmd_check(args: argparse.Namespace) -> int:
     """Load one paper bundle and print a quick summary (a fast sanity check on inputs)."""
-    view = load_paper(args.paper_dir)
-    print(f"{view.title}")
-    print(f"  slug:     {view.slug}")
-    print(f"  nirs4all: {view.bundle.nirs4all_version}")
-    print(f"  steps:    {len(view.steps)} ({view.n_steps} excl. split)")
-    print(f"  cited:    {len(view.references)} reference(s)")
-    print(f"  replay:   {'yes' if view.replay else 'no'}")
-    uncited = [s.info.short_name for s in view.steps if s.info.kind in ("preprocessing", "model", "target") and not s.reference]
-    if uncited:
-        print(f"  uncited:  {', '.join(uncited)}")
-    return 0
+    view = load_paper(args.paper_dir, read_current=args.read_current)
+    print(view.title)
+    print(f"  slug: {view.slug}")
+    print(f"  reading: {view.reading_status}")
+    print(f"  detail: {view.reading_detail}")
+    print(f"  raw file SHA-256: {view.raw_download_sha256}")
+    print("  execution: not evaluated")
+    return 1 if args.read_current and view.reading_status != "documents_readable" else 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -75,6 +72,7 @@ def main(argv: list[str] | None = None) -> int:
         help="optional nirs4all-formats/io WASM bundle dir (with formats/ + io/) to bundle for "
         "vendor-file replay, e.g. the nirs4all-web WASM bundle directory",
     )
+    p_build.add_argument("--read-current", action="store_true", help="inspect current native/SDK owner JSON with optional readers")
     p_build.set_defaults(func=_cmd_build)
 
     p_new = sub.add_parser("new", help="scaffold a new papers/<slug>/ bundle")
@@ -84,6 +82,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p_check = sub.add_parser("check", help="summarize one papers/<slug>/ bundle")
     p_check.add_argument("paper_dir", help="path to a papers/<slug>/ directory")
+    p_check.add_argument("--read-current", action="store_true", help="require supported current owner document reading")
     p_check.set_defaults(func=_cmd_check)
 
     args = parser.parse_args(argv)

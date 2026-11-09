@@ -16,7 +16,6 @@ from nirs4all_papers.provider import (
     provider_capabilities,
 )
 from nirs4all_papers.site import write_paper_sidecars
-from tests.conftest import DEMO_DIR, REPO_ROOT
 
 
 def test_provider_capabilities_document_archive_boundaries():
@@ -29,26 +28,28 @@ def test_provider_capabilities_document_archive_boundaries():
     assert "citation" in caps["verbs"]
     assert "bibtex" in caps["verbs"]
     assert "export_sidecars" in caps["verbs"]
+    assert "core_dependency" not in caps["non_goals"]
+    assert caps["optional_dependencies"]["sdk-host-reader"] == ["nirs4all"]
 
 
-def test_provider_wraps_catalog_paper_and_bundle_reads():
-    catalog = list_papers(REPO_ROOT)
-    assert [paper.slug for paper in catalog.papers] == ["2026-pls-nirs-demo"]
+def test_provider_wraps_catalog_paper_and_bundle_reads(sdk_paper):
+    catalog = list_papers(sdk_paper.parents[1], read_current=True)
+    assert [paper.slug for paper in catalog.papers] == ["synthetic-reader"]
 
-    paper = load_paper_bundle(DEMO_DIR)
-    assert load_paper(DEMO_DIR).slug == paper.slug
-    assert paper.slug == "2026-pls-nirs-demo"
+    paper = load_paper_bundle(sdk_paper, read_current=True)
+    assert load_paper(sdk_paper, read_current=True).slug == paper.slug
+    assert paper.slug == "synthetic-reader"
     assert paper.bundle_filename == "model.n4a"
 
-    bundle = inspect_bundle(DEMO_DIR / "model.n4a")
+    bundle = inspect_bundle(sdk_paper / "model.n4a")
     assert bundle.path.name == "model.n4a"
-    assert bundle.pipeline["steps"]
-    assert bundle.fingerprint == paper.bundle.fingerprint
+    assert bundle.document("training_declaration").value["steps"]
+    assert bundle.container_sha256 == paper.bundle.container_sha256
 
 
-def test_citation_and_bibtex_are_pure_read_helpers():
-    cff = citation(DEMO_DIR)
-    bib = bibtex(DEMO_DIR)
+def test_citation_and_bibtex_are_pure_read_helpers(sdk_paper):
+    cff = citation(sdk_paper)
+    bib = bibtex(sdk_paper)
     assert "cff-version: 1.2.0" in cff
     assert "@article{" in bib or "@misc{" in bib
 
@@ -62,13 +63,12 @@ def test_build_methods_section_is_structured_without_rendering_pages():
     assert {ref["id"] for ref in section["references"]} == {"minmax", "pls"}
 
 
-def test_export_sidecars_writes_only_the_reproduction_crate(tmp_path):
-    crate = export_sidecars(DEMO_DIR, tmp_path / "export")
-    assert crate == tmp_path / "export" / "paper" / "2026-pls-nirs-demo"
+def test_export_sidecars_writes_only_the_reproduction_crate(tmp_path, sdk_paper):
+    crate = export_sidecars(sdk_paper, tmp_path / "export")
+    assert crate == tmp_path / "export" / "paper" / "synthetic-reader"
     assert sorted(p.name for p in crate.iterdir()) == [
         "CITATION.cff",
         "model.n4a",
-        "pipeline.json",
         "references.bib",
         "ro-crate-metadata.json",
     ]
@@ -76,13 +76,16 @@ def test_export_sidecars_writes_only_the_reproduction_crate(tmp_path):
     json.loads((crate / "ro-crate-metadata.json").read_text(encoding="utf-8"))
 
 
-def test_public_sidecar_writer_matches_provider_export(tmp_path, demo_view):
-    crate = write_paper_sidecars(demo_view, tmp_path / "manual")
-    assert crate == tmp_path / "manual" / "paper" / demo_view.slug
-    assert (crate / "pipeline.json").exists()
+def test_public_sidecar_writer_matches_provider_export(tmp_path, current_view):
+    crate = write_paper_sidecars(current_view, tmp_path / "manual")
+    assert crate == tmp_path / "manual" / "paper" / current_view.slug
+    assert not (crate / "pipeline.json").exists()
+    assert (crate / "container-manifest.json").read_bytes() == current_view.bundle.manifest_bytes
+    for name, raw in current_view.document_downloads:
+        assert (crate / name).read_bytes() == raw
 
 
-def test_build_repro_page_wraps_site_build(tmp_path):
-    out = build_repro_page(REPO_ROOT, tmp_path / "site")
+def test_build_repro_page_wraps_site_build(tmp_path, sdk_paper):
+    out = build_repro_page(sdk_paper.parents[1], tmp_path / "site", read_current=True)
     assert (out / "index.html").exists()
-    assert (out / "paper" / "2026-pls-nirs-demo" / "CITATION.cff").exists()
+    assert (out / "paper" / "synthetic-reader" / "CITATION.cff").exists()

@@ -1,126 +1,119 @@
 <!-- SPDX-License-Identifier: CeCILL-2.1 OR AGPL-3.0-or-later -->
-# Reproduction Document Publisher — product design (alpha)
+# Reproduction document publisher: current reader contract
 
-> The planned feature named in `CLAUDE.md`: *"automatic per-experiment reproduction-document
-> publisher — a methods + bibliography report plus a WASM page that re-runs the pipeline."*
-> This document is the design; `src/nirs4all_papers/` is the alpha implementation.
+The active publisher keeps archive publication independent of optional current `.n4a` inspection.
+Core owns V1 physical storage, inventory, integrity, native Package2/3 selection and admission. SDK
+owns `nirs4all.python-host` metadata and JSON selection/validation over that same verified Core file.
+Calling SDK for its profile is an owner route, never a fallback after native refusal.
 
-## 1. What it is
+## Supported reading
 
-A small, dependency-light Python tool (`n4a-papers`) that turns a **finished nirs4all
-experiment** — a deposited `.n4a` bundle plus a hand-written `paper.yaml` — into a
-**self-contained, publication-grade reproduction document**: one static HTML page per paper that
-combines
+- Native Package2/3: Core selects `predict-external`; exact package and available training outcome
+  documents are detached. A standalone Package3 has no invented complete parent outcome or scores.
+- SDK-host: SDK validates `host-predict` / `host.predict` and returns exact bundle metadata and full
+  JSON documents with semantic roles, inventory identities and declared content types. Original
+  `training_declaration` and cosmetic `prediction_config` remain distinct. Additional owner JSON,
+  branches, options, targets, results, scoring context and identity arrays are preserved whole.
+- Foreign V1: readable inventory, unsupported owner semantics. No references are fetched.
+- Historical physical layouts: Core refuses current reading. Raw archive downloads remain unchanged;
+  no old ZIP parser, converter, fitted-object loader or inferred pipeline is provided.
 
-1. an **auto-generated methods & bibliography report** (the exact pipeline, its protocol and
-   scores, a per-step methods narrative, and a citation list cross-referenced to every operator),
-   and
-2. a **live, in-browser pipeline replay** ("re-run this pipeline") that re-executes the published
-   pipeline on an included dataset and recomputes the parity/residual plots and scores — *in the
-   same page as the report*,
+Readability, SDK pre-model checks, scientific scoring validation and execution are distinct. Reports
+state what was evaluated; no JSON readability claim implies valid DAG scoring or native parity.
 
-together with the **machine-readable sidecars** a journal or a reviewer expects
-(`CITATION.cff`, `references.bib`, an RO-Crate `ro-crate-metadata.json`, the copied `pipeline.json`
-and the `.n4a` itself).
+## Publication and identity
 
-It is a sibling static site to `nirs4all.org` / `datasets.nirs4all.org` / `formats.nirs4all.org`,
-intended for **papers.nirs4all.org**, and it deliberately reuses the family's exact visual design.
+`paper.yaml` supplies human public metadata. Scores/protocol from it are labelled **as published**,
+separate from complete owner evidence. Missing owner documents, recipes or scores are explicitly
+absent. Papers never flattens V1 recipes into a step/model heuristic or substitutes prediction labels
+for a training recipe. Bibliography comes from explicitly supplied `method_ids` and the curated seed.
 
-## 2. Why (use cases)
+Current exports copy exact owner document bytes to numbered `owner-document-*.json` files, with the
+member/role displayed in the page, plus the exact `container-manifest.json`. No synthetic
+`pipeline.json` or Python computational workflow is generated. RO-Crate describes actual files; its
+main entity is the archive. Current Core container/manifest hashes, owner fingerprints and raw file
+SHA are separate. Supplied historical `provenance.bundle_fingerprint` retains its old namespace.
 
-- **Author** — "I have an accepted paper and the `.n4a` that produced its model. Generate the
-  reproduction page, the bibliography, and the citation files for deposit."
-- **Reviewer / reader** — "Show me precisely which preprocessing + model + protocol produced this
-  number, with the literature for each method, and let me re-run it without installing anything."
-- **Ecosystem** — a permanent, browsable, DOI-linked archive of reproducible nirs4all results that
-  `nirs4all.org` links to; every page is also a self-contained RO-Crate.
+Optional `archive_sidecars` is a list of explicitly supplied released files confined to the paper
+directory. They are copied verbatim, including supplied CFF/RO-Crate, rather than recreated from an
+unsupported container. Their basenames must not collide. Derived sidecars available only in a frozen
+published site must be supplied explicitly; the publisher does not mine generated output. Metadata
+links retain historical companions and their approximation labels. Current reader pages do not run
+approximate-JS replay or produce automatic `.predict` reproduction instructions.
 
-## 3. Boundaries (what it does *not* do)
+Downloads keep their basename/URL. Current copies use Core verified copying into a staged file and
+compare the receipt to displayed identities before atomic publication; partial failures are discarded.
+Historical raw copies use a separate raw hash and make no current-admission claim. Output keeps
+`.n4a-papers-build` and refuses to wipe unmarked nonempty directories. Never hand-edit generated site.
 
-Per the ecosystem rule *"the lower layer is the single source of truth for its domain"*:
+## Dependencies and local use
 
-- It **reads** `.n4a` bundles (stdlib `zipfile`+`json`); it does **not** re-implement nirs4all,
-  re-parse vendor files, or re-fit models server-side. Pipeline/scores/protocol semantics come from
-  the bundle + `paper.yaml`.
-- Method citations are a **curated seed** (`data/bibliography.json`) distilled from
-  `nirs4all-methods/docs/_extras/methods_bibliography.py` (+ `OPERATOR_BIB`) — not scraped at build
-  time. New methods get a new seed entry.
-- The replay is a **pure-JS reference engine** (NIPALS PLS + SNV/SavGol/scalers + Kennard–Stone)
-  that re-runs the *pipeline definition* and runs anywhere (incl. `file://`). The production target
-  is the **libn4m WebAssembly** engine already shipped in `nirs4all-web` (`runPortablePipeline`);
-  the page documents and is structured for that upgrade. The alpha never overclaims "WASM".
+The archive-only Python 3.10 base uses PyYAML. Optional `current-reader` supplies Core and optional
+`sdk-host-reader` supplies SDK, lazily used for its profile; owners require Python >=3.11. Candidate
+floors Core >=0.5.0,<0.6 and SDK >=1.4.16,<2 require the matching qualified wheel/source cohort, not
+merely a release label. No package version, lock, schema epoch or release tag is changed here.
 
-## 4. Inputs → outputs
-
-```
-papers/<slug>/
-  paper.yaml        # human metadata the bundle can't carry (title, authors, DOI, scores, protocol…)
-  model.n4a         # the deposited bundle: pipeline.json + manifest.json + fold_weights + artifacts
-  replay.json       # optional: a small (X, y, axis) dataset to re-run the pipeline live in-browser
-        │
-        ▼  n4a-papers build .  --out site/
-site/
-  index.html                         # landing (hero + KPIs + how-it-works)
-  catalog.html                       # filter/search/sort over all papers
-  paper/<slug>.html                  # THE reproduction document + live replay (one page)
-  paper/<slug>/CITATION.cff          # ─┐
-  paper/<slug>/references.bib        #  │ machine-readable sidecars,
-  paper/<slug>/ro-crate-metadata.json#  │ ready for deposit
-  paper/<slug>/pipeline.json         #  │
-  paper/<slug>/model.n4a             # ─┘ (the bundle, for download/replay)
-  brand/                             # favicon, icon, og (copied)
+```bash
+n4a-papers build . --out <dedicated-output>
+n4a-papers build . --out <dedicated-output> --read-current
+n4a-papers check <paper-directory> --read-current
 ```
 
-## 5. The per-paper page (sections)
+Archive-only is the default; it cannot qualify current reading. Missing Core/SDK is a dependency
+status, not an invalid/historical classification. A refused read does not delete a catalog entry.
+Direct provider `inspect_bundle` requests current reading; catalog/build/export wrappers accept
+`read_current=True`. The facade writes only caller-selected local output, never uploads or writes
+other stores. Existing narrow publisher and full provider/coverage CI-equivalent gates remain
+separate, including the latter's separately authorized external Repository setup.
 
-1. **Hero** — title, authors, status/venue/year/DOI badges, abstract, nirs4all version.
-2. **KPI strip** — headline metrics (RMSE, R², components, #steps, dataset size).
-3. **Pipeline** — the ordered steps as typed cards (preprocessing / target-transform / split /
-   model) with params and a citation superscript, plus an inline-SVG flow diagram.
-4. **Protocol** — split, CV folds, fold strategy + weights, scoring metric.
-5. **Results** — metrics table + parity (predicted vs measured) + residuals plots.
-6. **Live replay** — re-runs the published pipeline on the included dataset *in the browser*,
-   recomputing parity/residuals and RMSE/R²; honest about being a pure-JS reference engine. Also
-   offers **"run on your own data"**: a CSV upload (pure-JS fast-path, works everywhere) or, when the
-   site is built with `--io-wasm`, vendor spectra files decoded on demand via the `nirs4all-formats`
-   + `nirs4all-io` WASM — the same engine `nirs4all-web` uses. Nothing leaves the browser.
-7. **Methods narrative** — auto-generated prose, one paragraph per step, each cited.
-8. **Bibliography** — numbered reference list with DOIs/links, only the methods actually used.
-9. **Provenance & reproduction** — `pipeline_uid`, per-file SHA-256 fingerprints, bundle inventory,
-   reproduction commands, and the sidecar downloads.
-10. **Citation** — rendered `CITATION.cff` + BibTeX.
+## Boundaries
 
-## 6. Architecture (mirrors the `nirs4all-datasets` site generator)
+No server refit, vendor parser, model deserialization, execution, score recomputation or source archive
+mutation. Frozen scientific kits, models, locks, manuscripts and provenance remain upstream evidence.
+Historical JS replay remains an approximate independent reference, not production WASM parity.
+The optional local presentation island changes display only; owner reading and scientific behavior are unchanged.
 
-Pure-Python f-string templating, one giant inline `<style>`, inline-SVG charts, self-contained
-output that works from `file://` — the same shape as `nirs4all_datasets.site`, so the pages
-"claque" identically.
 
+## Shared UI presentation staging
+
+The publisher consumes the actual UI.2 `StatTile` component for neutral reading/identity and
+as-published result cards. Its partition selector preserves supplied labels, order and duplicates.
+A missing partition is distinct from a supplied partition named “All”. Values use the same display
+strings as the existing static results, including `nan`, `inf`, `-inf` and `—`; no numerical value is
+calculated or substituted. A fixed JSON whitelist excludes metadata dumps, local paths, reading
+exceptions, recipes and owner documents. React renders the projected strings as text.
+
+The island starts hidden and becomes visible after a successful mount. Complete static results remain
+in a native disclosure (initially open), with provenance, exact downloads and full owner documents
+unchanged. No JavaScript is needed to access them. Missing or blocked enhancement assets retain
+static publication. The island makes no network/storage/owner calls and adds no external assets;
+existing font/analytics declarations in the host chrome are outside this presentation change.
+
+Node is needed only for explicitly requested maintainer staging, never by `build_site`, the installed
+CLI, install hooks or wheel creation. Use an existing offline Web dependency cohort. The accepted
+archive SHA-256 is `237a3bf306bdb6fec5088783c425381bcf125540ba7ad25e1aec0604198d7728`.
+The supplied local tooling cohort has React/ReactDOM 18.3.1, scheduler 0.23.2, and esbuild 0.25.12.
+
+```bash
+node ui/build.mjs \
+  --archive /path/to/nirs4all-ui-0.2.2-local.20261107.2.tgz \
+  --modules /path/to/nirs4all-web/web-app/node_modules \
+  --stage /path/to/empty-private-stage \
+  --out src/nirs4all_papers/data/ui
 ```
-src/nirs4all_papers/
-  bundle.py        read .n4a (stdlib), per-file checksums, parse + type pipeline steps
-  bibliography.py  curated seed → normalize method ids → resolve references → BibTeX
-  provenance.py    CITATION.cff, RO-Crate 1.1 (+author/license/citation), reproduction commands
-  model.py         PaperView / StepView / ReferenceView; load_paper, load_catalog
-  data/bibliography.json   the curated citation seed
-  site/{theme,components,charts,pages,escape,assets}.py   the renderer (design lifted from the family)
-  cli.py           n4a-papers build / new
-```
 
-## 7. Alpha status
+The script refuses an unrecognized archive and nonempty stage/output directories. It extracts the
+accepted archive directly, uses its public qualification export and Web's explicit React/DOM cohort,
+and emits one classic IIFE plus unchanged upstream qualification CSS and a small Papers stylesheet.
+It does not use Web's installed UI copy, run npm lifecycle hooks or rebuild UI/Core/SDK/Methods.
+The resource manifest records actual dependency/tool versions, archive/source hashes and output
+hashes. UI licences/notices and the actual bundled React/DOM/scheduler MIT texts accompany the files;
+the UI upstream notice's separate browser-bundle versions do not describe this Papers bundle.
 
-Implemented: bundle ingest + fingerprints (with `repr()`-address sanitisation), method→citation
-resolution (de-duplicated by citation content), all page types, the live JS replay, and all four
-machine-readable sidecars, with one worked demo paper. Publication-readiness layer: Google-Scholar
-`citation_*` meta + a schema.org `ScholarlyArticle` JSON-LD per page, canonical/OG/Twitter tags,
-`sitemap.xml` + `robots.txt`, a CFF with DOI `identifiers` + dataset citation (no faked version), an
-RO-Crate whose `mainEntity` is the real `pipeline.json` with a license URL `@id` + dataset entity,
-a per-method **principle** line, an explicit three-layer **licensing** panel, "cite the paper vs the
-bundle" guidance, copy-to-clipboard, an in-page TOC, and a print stylesheet. Quality: a `pytest`
-suite (`tests/`) + a `ci.yml` that lints, type-checks, tests, builds, and validates the emitted
-sidecars; the replay JS is regression-tested against the sklearn reference under Node.
-
-Documented as the production path but **not** in the alpha: the **libn4m WASM** replay engine (the
-JS engine is an honest, approximate reference — `replay_panel` is the swap seam) and the optional
-ingest of a real `dag-ml` research-provenance package (PROV/RO-Crate) when a run carries one (the
-`bundle.has_trace` / `has_chain` flags are the hook).
+Stage once before making the consumer wheel. Package-data includes nested notices; the Python builder
+copies resources via `importlib.resources` to `assets/papers-ui/`. An unstaged source checkout stays
+static-only. A current-reader gate and a shared-UI gate must exercise their actual respective paths;
+static-only success is not shared-UI qualification. The affected shared-UI gate is the focused
+projection tests plus existing build tests, one filter/reset browser path and one no-JS or blocked
+bundle fallback, followed by one candidate-wheel resource/Node-free builder check. No owner suite,
+fit, model deserialization, real archive regeneration or deployment is implied.

@@ -43,9 +43,9 @@ def footer(rel: str) -> str:
 <footer><div class="container">
   <div>
     <div class="f-brand">nirs4all-papers</div>
-    <p class="f-meta">Public, permanent reproduction documents for deposited nirs4all papers — the
-    exact pipeline, its methods and bibliography, a live in-browser replay, and machine-readable
-    deposit sidecars (CITATION.cff, BibTeX, RO-Crate).</p>
+    <p class="f-meta">Public, permanent archive documents for deposited nirs4all papers — exact downloads,
+    available owner documents, published scores and explicitly supplied method citations,
+    with machine-readable deposit sidecars (CITATION.cff, BibTeX, RO-Crate).</p>
   </div>
   <div class="f-links">
     <a href="{rel}index.html">Overview</a>
@@ -73,11 +73,11 @@ def hero(n_papers: int, n_methods: int) -> str:
   </svg>
   <div class="container hero-content">
     <img class="hero-logo" src="brand/horizontal.svg" alt="nirs4all-papers" width="460">
-    <div class="hero-badge"><span class="dot"></span> deposited · cited · re-runnable in the browser</div>
-    <h1 class="hero-tagline">Every published pipeline, <em>reproducible</em></h1>
-    <p class="hero-sub">Each nirs4all paper becomes a self-contained reproduction document — the exact
-    preprocessing and model, a bibliography for every method, the protocol and scores, and a
-    <strong>live replay</strong> that re-runs the pipeline in your browser.</p>
+    <div class="hero-badge"><span class="dot"></span> deposited · cited · available for download</div>
+    <h1 class="hero-tagline">Public paper archives, <em>readable evidence</em></h1>
+    <p class="hero-sub">Read public archive metadata, complete available owner documents, and published protocol
+    and scores. Method citations require explicitly supplied <code>method_ids</code>;
+    current document reading does not execute pipelines.</p>
     <div class="hero-ctas">
       <a class="btn btn-primary" href="catalog.html">Browse the papers &rarr;</a>
       <a class="btn btn-outline" href="https://nirs4all.org" target="_blank" rel="noopener">nirs4all.org</a>
@@ -171,7 +171,7 @@ def paper_card(view: PaperView) -> str:
     model = view.model_step
     model_name = model.info.short_name if model else "—"
     primary_metric = view.metrics[0] if view.metrics else None
-    metric_str = f"{primary_metric.name} {esc(_short(primary_metric.value))}" if primary_metric else "—"
+    metric_str = f"as published: {primary_metric.name} {esc(_short(primary_metric.value))}" if primary_metric else "—"
     badges = [status_badge(view.status)]
     if view.doi:
         badges.append(badge("DOI", "neutral"))
@@ -191,9 +191,9 @@ def paper_card(view: PaperView) -> str:
   <div class="p-authors">{esc(view.authors_line) or "—"}</div>
   {venue}
   <div class="p-meta">
-    <div>Model <b>{esc(model_name)}</b></div>
+    <div>Reading <b>{esc(view.reading_status)}</b></div>
     <div>{esc(metric_str)}</div>
-    <div>Steps <b>{view.n_steps}</b></div>
+    <div>Steps <b>{view.n_steps if view.n_steps is not None else "unavailable"}</b></div>
   </div>
   <div class="p-badges">{"".join(badges)}</div>
 </article>
