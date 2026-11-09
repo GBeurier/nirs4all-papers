@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nirs4all-papers"
-version = "0.2.3"
+version = "0.2.4"
 description = "Public archive publisher with optional read-only Core V1 and SDK-host document inspection."
 readme = "README.md"
 requires-python = ">=3.10"
