@@ -25,3 +25,14 @@ By contributing **project-authored code/content** you agree to the `CeCILL-2.1 O
 license and `CODE_OF_CONDUCT.md`. **Deposited artifacts keep their own terms** — published/accepted
 manuscript PDFs remain under the publisher's copyright, and datasets/third-party assets are governed by
 their own license/DOI terms; only deposit what you can redistribute under those terms.
+
+## Cross-repository version constraints
+
+Dependencies on packages from other nirs4all repositories are declared at
+**minor** granularity, never more precisely: `nirs4all-core>=0.5,<0.6` and
+`nirs4all>=1.4,<2`. Exact versions live in lockfiles and the release order; the
+qualified reader cohort is recorded with each bundle, not in these ranges. In
+return an owner patch release changes no wire format, persisted schema, `.n4a`
+payload semantics or native ABI; such changes need at least a minor release. The
+full policy is `docs/contracts/release/VERSION_CONSTRAINTS.md` in
+`nirs4all-ecosystem`.

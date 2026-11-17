@@ -49,8 +49,8 @@ Historical raw copies use a separate raw hash and make no current-admission clai
 ## Dependencies and local use
 
 The archive-only Python 3.10 base uses PyYAML. Optional `current-reader` supplies Core and optional
-`sdk-host-reader` supplies SDK, lazily used for its profile; owners require Python >=3.11. Candidate
-floors Core >=0.5.0,<0.6 and SDK >=1.4.16,<2 require the matching qualified wheel/source cohort, not
+`sdk-host-reader` supplies SDK, lazily used for its profile; owners require Python >=3.11. Minor-level
+ranges Core >=0.5,<0.6 and SDK >=1.4,<2 require the matching qualified wheel/source cohort, not
 merely a release label. No package version, lock, schema epoch or release tag is changed here.
 
 ```bash
