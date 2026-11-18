@@ -38,8 +38,17 @@ Optional `archive_sidecars` is a list of explicitly supplied released files conf
 directory. They are copied verbatim, including supplied CFF/RO-Crate, rather than recreated from an
 unsupported container. Their basenames must not collide. Derived sidecars available only in a frozen
 published site must be supplied explicitly; the publisher does not mine generated output. Metadata
-links retain historical companions and their approximation labels. Current reader pages do not run
-approximate-JS replay or produce automatic `.predict` reproduction instructions.
+links retain historical companions and their approximation labels. An independently declared browser
+companion may be displayed on the same page as current owner reading; it never executes the archive
+or produces automatic `.predict` reproduction instructions.
+
+The optional `replay_plan` metadata declares `features` (each with supported `op` and `params`),
+`yTransform` (`null`, `minmax` or `standard_scaler`), a PLS `model` (`op: pls` and a positive
+`n_components`) and integer `cv` of at least two. Its dataset is the sanitized `replay.json` sidecar.
+Unsupported declarations are refused instead of silently substituted. The public PLS demo declares
+its browser approximation and `method_ids` explicitly: bibliography and replay do not require a
+current reader, inferred archive steps, fitted-object loading, or any server. Published scores remain
+unchanged and separate from recomputed browser-reference scores.
 
 Downloads keep their basename/URL. Current copies use Core verified copying into a staged file and
 compare the receipt to displayed identities before atomic publication; partial failures are discarded.
@@ -68,8 +77,8 @@ separate, including the latter's separately authorized external Repository setup
 
 ## Boundaries
 
-No server refit, vendor parser, model deserialization, execution, score recomputation or source archive
-mutation. Frozen scientific kits, models, locks, manuscripts and provenance remain upstream evidence.
+No server refit, vendor parser, model deserialization, archive execution, server score recomputation or
+source archive mutation. Frozen scientific kits, models, locks, manuscripts and provenance remain upstream evidence.
 Historical JS replay remains an approximate independent reference, not production WASM parity.
 The optional local presentation island changes display only; owner reading and scientific behavior are unchanged.
 

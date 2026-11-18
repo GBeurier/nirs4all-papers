@@ -87,9 +87,10 @@ current admission. Native/SDK documents retain their own identities and complete
 context; depositor metrics are separately labelled **as published**. Missing training recipes or
 scores remain absent. Unknown foreign content stays inventory-only. Readability is not executability.
 
-Historical approximate-JS companions retain their separate labels and frozen bytes. Current read
-views do not execute that replay or claim native parity. No source archive or generated `site/` is
-rewritten by reading. Builds retain the output marker and refuse to wipe unmarked directories.
+Approximate-JS companions use an explicitly declared `replay_plan` in `paper.yaml` and a separate
+`replay.json` dataset. They run in the browser independently of optional owner reading, with no native
+parity claim. The public PLS demo includes its plan and `method_ids` for the restored bibliography.
+No source archive is rewritten by reading. Builds retain the output marker and refuse to wipe unmarked directories.
 
 ## Shared UI presentation
 

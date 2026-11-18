@@ -29,7 +29,7 @@ def test_build_emits_pages_and_sidecars(tmp_path, sdk_paper):
     assert '<script id="papers-ui-data" type="application/json">' in html
     assert '<details id="papers-static-results" open>' in html
     assert "Complete published results — static text" in html
-    assert "Current document reading does not run" in html
+    assert "No browser replay with an explicitly declared plan" in html
     assert "citation_title" in html  # scholarly meta
     assert "application/ld+json" in html  # JSON-LD
     assert 'rel="canonical"' in html

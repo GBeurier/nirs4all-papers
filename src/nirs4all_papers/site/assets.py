@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: CeCILL-2.1 OR AGPL-3.0-or-later
 """The live in-browser pipeline replay: a self-contained, pure-JS reference engine.
 
-It re-runs the *published pipeline definition* (preprocessing + target transform + PLS model) on the
-deposited dataset under leakage-safe k-fold cross-validation, recomputes the parity/residual plots
+It runs an explicitly declared browser plan (preprocessing + target transform + PLS model) on the
+companion dataset under leakage-safe k-fold cross-validation, recomputes the parity/residual plots
 and RMSE/R²/RPD, and renders them as inline SVG — with **no build step and no network**, so it works
 from ``file://`` and on GitHub Pages alike.
 
@@ -27,6 +27,31 @@ _PLS_FAMILY = {"pls", "simpls", "ikpls", "pcr"}
 
 def replay_plan(view: PaperView) -> dict[str, Any]:
     """Translate the typed pipeline steps into an executable plan for the JS engine."""
+    declared = getattr(view, "meta", {}).get("replay_plan")
+    if declared is not None:
+        # This is a separately deposited browser companion, never a projection
+        # of an opaque archive or a claim about current owner execution.
+        if not isinstance(declared, dict) or set(declared) != {"features", "yTransform", "model", "cv"}:
+            raise ValueError("replay_plan requires features, yTransform, model and cv")
+        declared_features = declared["features"]
+        if not isinstance(declared_features, list) or any(
+            not isinstance(step, dict) or set(step) != {"op", "params"}
+            or not isinstance(step["op"], str) or step["op"] not in _SUPPORTED_FEATURE_OPS
+            or not isinstance(step["params"], dict) for step in declared_features
+        ):
+            raise ValueError("replay_plan contains an unsupported feature declaration")
+        if declared["yTransform"] not in (None, "minmax", "standard_scaler"):
+            raise ValueError("replay_plan contains an unsupported target transform")
+        declared_model = declared["model"]
+        if (not isinstance(declared_model, dict) or set(declared_model) != {"op", "n_components"} or declared_model["op"] != "pls"
+                or type(declared_model["n_components"]) is not int or declared_model["n_components"] < 1):
+            raise ValueError("replay_plan requires a PLS model and a positive component count")
+        if type(declared["cv"]) is not int or declared["cv"] < 2:
+            raise ValueError("replay_plan requires at least two folds")
+        return {"features": declared_features, "yTransform": declared["yTransform"],
+                "model": {**declared_model, "supported": True, "name": "NIPALS PLS reference"},
+                "cv": declared["cv"], "unsupported": []}
+
     features: list[dict[str, Any]] = []
     y_transform: str | None = None
     model: dict[str, Any] | None = None
@@ -72,9 +97,9 @@ def replay_panel(view: PaperView, rel: str, io_wasm_base: str = "") -> str:
     if not view.replay:
         return (
             '<section class="panel wide"><h2>Live replay<span class="h2-tag">in-browser</span></h2>'
-            '<div class="panel-body"><p class="dl-note">No replay dataset was included with this paper '
-            '(<code>replay.json</code>). The full pipeline is still reproducible from the deposited '
-            '<code>.n4a</code> with the commands in the reproduction section below.</p></div></section>'
+            '<div class="panel-body"><p class="dl-note">No browser replay with an explicitly declared plan '
+            'and dataset is available for this deposit. The original archive remains available for download; '
+            'current document reading does not execute it.</p></div></section>'
         )
 
     plan = replay_plan(view)
@@ -119,7 +144,7 @@ def replay_panel(view: PaperView, rel: str, io_wasm_base: str = "") -> str:
     <details class="byod">
       <summary>&#128194; Run on your own dataset</summary>
       <div class="byod-body">
-        <p class="dl-note">Re-run this exact pipeline on <strong>your</strong> data, entirely in your browser. Upload a
+        <p class="dl-note">Run this approximate browser companion on <strong>your</strong> data, entirely in your browser. Upload a
         <strong>CSV</strong> (rows = samples; one column is the target, the rest are the spectrum){vendor_hint}.
         Nothing is uploaded to a server.</p>
         <div class="byod-drop" id="byod-drop">
@@ -135,11 +160,11 @@ def replay_panel(view: PaperView, rel: str, io_wasm_base: str = "") -> str:
 
     return f"""
 <section class="panel wide replay-wrap">
-  <h2>Live replay — re-run this pipeline<span class="h2-tag">in your browser</span></h2>
+  <h2>Live replay — approximate browser companion<span class="h2-tag">in your browser</span></h2>
   <div class="panel-body">
     <div class="replay-controls">
       <button class="btn btn-primary" id="replay-run">&#9654; Run the pipeline</button>
-      <span class="replay-status" id="replay-status">ready</span>
+      <span class="replay-status" id="replay-status" role="status" aria-live="polite">ready</span>
       <span class="replay-engine" style="margin-left:auto"><i></i> pure-JS reference engine · NIPALS PLS · {cv}-fold OOF</span>
     </div>
     <div class="replay-source" id="replay-source"></div>
@@ -149,13 +174,12 @@ def replay_panel(view: PaperView, rel: str, io_wasm_base: str = "") -> str:
       <div class="replay-chart chart" id="replay-resid" tabindex="0" role="button" aria-label="residual plot"></div>
     </div>
     {byod}
-    <p class="replay-note">Re-runs the published preprocessing + model on the dataset under leakage-safe
+    <p class="replay-note">Runs the separately declared reference preprocessing + model on the dataset under leakage-safe
     {cv}-fold cross-validation, recomputing out-of-fold predictions and scores entirely in your browser. {esc(data_note)}</p>
     <p class="replay-note"><strong>Approximate.</strong> This is an independent pure-JS reference engine
-    (NIPALS PLS) with a deterministic {cv}-fold split — it demonstrates the pipeline, but does not reproduce
-    the deposited run's exact PLS implementation or fold strategy, so these scores are close to, not
-    identical to, the published values above. The exact pipeline is reproducible from the
-    <code>.n4a</code> with the commands below.</p>
+    (NIPALS PLS) with a deterministic {cv}-fold split. It demonstrates the declared browser plan;
+    it does not execute the deposited <code>.n4a</code> or reproduce its exact implementation, folds,
+    or published scores. Current owner reading and native execution remain separate.</p>
     {unsupported_note}{model_note}
   </div>
 </section>

@@ -75,9 +75,9 @@ def hero(n_papers: int, n_methods: int) -> str:
     <img class="hero-logo" src="brand/horizontal.svg" alt="nirs4all-papers" width="460">
     <div class="hero-badge"><span class="dot"></span> deposited · cited · available for download</div>
     <h1 class="hero-tagline">Public paper archives, <em>readable evidence</em></h1>
-    <p class="hero-sub">Read public archive metadata, complete available owner documents, and published protocol
-    and scores. Method citations require explicitly supplied <code>method_ids</code>;
-    current document reading does not execute pipelines.</p>
+    <p class="hero-sub">Read public archive metadata, available owner documents, published scores and
+    method references. Run available browser companions on included or your own data;
+    these approximate demonstrations remain separate from current owner execution.</p>
     <div class="hero-ctas">
       <a class="btn btn-primary" href="catalog.html">Browse the papers &rarr;</a>
       <a class="btn btn-outline" href="https://nirs4all.org" target="_blank" rel="noopener">nirs4all.org</a>
