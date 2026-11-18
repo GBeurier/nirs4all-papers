@@ -71,7 +71,7 @@ No fitted objects are loaded and no metric, pipeline or scientific identity is r
 
 The Python 3.10 base requires PyYAML only and can publish historical raw downloads without admitting
 them to the current reader. The optional `current-reader` (Core) and `sdk-host-reader` (SDK) extras
-require Python 3.11 through their owners. Their minor-level ranges Core >=0.5,<0.6 and SDK >=1.4,<2 must
+require Python 3.11 through their owners. Their declared ranges Core >=0.5,<0.6 and SDK >=1.4,<2 must
 be used with the matching qualified native wheel/SDK source cohort; they are not claims about every
 published artifact with those labels.
 
