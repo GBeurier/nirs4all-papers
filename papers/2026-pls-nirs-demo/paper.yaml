@@ -17,11 +17,27 @@ abstract: >
   A worked, end-to-end example of the nirs4all reproduction-document publisher. A partial
   least-squares model is calibrated on near-infrared spectra to predict protein content, using a
   min–max scaling and standard-normal-variate preprocessing chain. The deposited .n4a bundle carries
-  the exact pipeline and fitted artifacts; this page re-derives the cross-validated scores live in the
-  browser from an included synthetic dataset, and lists the literature for every method used.
+  the archived pipeline and fitted artifacts. A separately declared browser companion demonstrates
+  the preprocessing and PLS on an included synthetic dataset using approximate NIPALS PLS and its own
+  deterministic folds. Its live scores are independent of the published values; method references
+  remain available in the bibliography.
 keywords: [NIRS, PLS, preprocessing, reproducibility, chemometrics]
 bundle: model.n4a
 replay: replay.json
+# The browser companion is explicitly declared independently of the opaque archive.
+# Its deterministic JS folds and NIPALS PLS are approximate, not native replay.
+method_ids: [minmax, snv, standard_scaler, pls]
+replay_plan:
+  features:
+    - op: minmax
+      params: {}
+    - op: snv
+      params: {}
+  yTransform: standard_scaler
+  model:
+    op: pls
+    n_components: 10
+  cv: 5
 dataset:
   name: "Synthetic NIRS protein calibration set"
   target: "protein (% w/w)"

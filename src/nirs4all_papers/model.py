@@ -311,7 +311,8 @@ def load_paper(paper_dir: str | Path, *, read_current: bool = False) -> PaperVie
     references, _ = build_bibliography([str(item) for item in _as_list(meta.get("method_ids"))])
     return PaperView(
         slug=slug, meta=meta, bundle=bundle, steps=[], references=references,
-        replay=None, bundle_filename=Path(bundle_name).name, paper_dir=paper_dir,
+        replay=_load_replay(paper_dir, meta) if meta.get("replay_plan") is not None else None,
+        bundle_filename=Path(bundle_name).name, paper_dir=paper_dir,
         archive_path=archive_path, raw_download_sha256=raw_sha, archive_byte_length=length,
         reading_status=status, reading_detail=detail,
     )

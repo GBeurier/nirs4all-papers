@@ -82,3 +82,27 @@ def test_replay_engine_matches_reference(demo_view, tmp_path):
     rmse = float(m.group(1))
     # the NIPALS reference engine should land near the sklearn CV reference (~1.7) on the demo data
     assert 1.0 < rmse < 2.5, rmse
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not available")
+def test_public_demo_declared_companion_runs(tmp_path):
+    """Execute the actual public plan and synthetic sidecar, independently of its archive."""
+    from pathlib import Path
+
+    from nirs4all_papers.model import load_paper
+
+    view = load_paper(Path(__file__).resolve().parents[1] / "papers/2026-pls-nirs-demo")
+    payload = {"plan": assets.replay_plan(view), "dataset": view.replay}
+    (tmp_path / "payload.json").write_text(json.dumps(payload))
+    (tmp_path / "engine.js").write_text(assets.REPLAY_JS)
+    (tmp_path / "harness.js").write_text(_HARNESS)
+    out = tmp_path / "out.json"
+    subprocess.run(
+        ["node", str(tmp_path / "harness.js"), str(tmp_path / "payload.json"), str(tmp_path / "engine.js"), str(out)],
+        check=True, timeout=60,
+    )
+    result = json.loads(out.read_text())
+    assert "done" in result["status"]
+    match = re.search(r"<b>([\d.]+)</b><span>RMSE", result["metrics"])
+    assert match, result
+    assert 1.0 < float(match.group(1)) < 2.5

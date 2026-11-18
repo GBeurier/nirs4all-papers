@@ -13,6 +13,7 @@ from pathlib import Path
 from .. import __version__, provenance
 from ..model import Catalog, PaperView
 from . import components as C
+from .assets import replay_panel
 from .charts import spectra_preview
 from .escape import cell, esc, inline_json, locator_link, num, safe_url
 from .shared_ui import projection_json
@@ -36,13 +37,14 @@ def _index_kpis(catalog: Catalog) -> list[tuple[str, str]]:
         (num(len(datasets)), "datasets"),
         (num(documents), "owner documents"),
         (num(readable), "current document reads"),
+        (num(sum(p.replay is not None for p in catalog.papers)), "browser replays"),
     ]
 
 
 def _how_it_works() -> str:
     cards = [
         ("&#129513;", "Methods &amp; bibliography", "Complete owner documents and explicitly supplied citations remain available without reconstructing pipeline steps."),
-        ("&#9654;", "Read-only publication", "Current reading does not execute a model. Historical approximate-JS companions retain their separate labels."),
+        ("&#9654;", "Live browser companions", "Explicitly declared reference plans replay in your browser. Approximate JS results remain separate from published scores and current owner reading."),
         ("&#128230;", "Deposit-ready sidecars", "Each paper ships CITATION.cff, BibTeX, an RO-Crate, and the deposited <code>.n4a</code> — fingerprinted and citable."),
     ]
     items = "".join(
@@ -399,10 +401,7 @@ def render_paper(view: PaperView, io_wasm_base: str = "", *, shared_ui: bool = F
     entries = [
         ("pipeline", "Owner documents", pipeline_panel),
         ("results", "Protocol &amp; results", results_grid),
-        ("replay", "Historical companions", _inject("replay",
-            '<section class="panel"><h2>Historical companions</h2><div class="panel-body">'
-            '<p>Current document reading does not run the approximate JS replay. The approximate reference is '
-            'not shown on this page; no native parity is claimed.</p></div></section>')),
+        ("replay", "Live replay", _inject("replay", replay_panel(view, rel, io_wasm_base))),
         ("bibliography", "Bibliography", bib_panel),
         ("license", "Licensing", _inject("license", _license_panel(view))),
         ("provenance", "Provenance", _inject("provenance", provenance_panel)),
