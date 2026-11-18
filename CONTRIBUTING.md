@@ -28,11 +28,22 @@ their own license/DOI terms; only deposit what you can redistribute under those 
 
 ## Cross-repository version constraints
 
-Dependencies on packages from other nirs4all repositories are declared at
-**minor** granularity, never more precisely: `nirs4all-core>=0.5,<0.6` and
-`nirs4all>=1.4,<2`. Exact versions live in lockfiles and the release order; the
-qualified reader cohort is recorded with each bundle, not in these ranges. In
-return an owner patch release changes no wire format, persisted schema, `.n4a`
-payload semantics or native ABI; such changes need at least a minor release. The
-full policy is `docs/contracts/release/VERSION_CONSTRAINTS.md` in
+Versions are `X.Y.Z`. A patch (`Z`) carries fixes and purely additive,
+backward-compatible features: existing outputs, wire formats, schemas and ABI
+symbols are unchanged. A minor (`Y`) carries any compatibility break: a changed
+or removed API signature, an ABI break or ABI version change, a wire, byte,
+schema or fixture change, renamed ids or changed numerical results of existing
+operations. The package that bumps classifies its change.
+
+Dependencies on packages from other nirs4all repositories accept every patch of
+one tested series, `>=X.Y[.Z],<X.(Y+1)`. A patch floor is allowed when a fix or
+feature from that patch is required; moving to a new series is an explicit,
+tested decision of the consumer. For 1.x packages the upper bound is the next
+minor, never `<2` (npm `~1.4.1`, Cargo `">=1.4.1, <1.5"`, Python
+`>=1.4.1,<1.5`).
+
+Current declarations: `nirs4all-core>=0.5,<0.6` and `nirs4all>=1.4,<2`; the
+SDK upper bound predates this rule and is aligned at the next release. Exact
+versions live in lockfiles and the release order; the qualified reader cohort is
+recorded with each bundle, not in these ranges. The full policy is `docs/contracts/release/VERSION_CONSTRAINTS.md` in
 `nirs4all-ecosystem`.
