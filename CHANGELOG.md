@@ -7,6 +7,12 @@ hardening pass; earlier history is in git.
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-11-19
+
+- Adopt the tested Core 0.6 and SDK 1.6 series for optional read-only current-container inspection.
+- Preserve exact owner documents, published scores, raw downloads and frozen reproducibility kits;
+  Papers does not execute the owners' numerical operations.
+
 ## [0.2.3] - 2026-07-06
 
 Patch release for the public deposited-paper archive, site builder (`n4a-papers build`),
