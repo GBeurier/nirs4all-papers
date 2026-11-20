@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nirs4all-papers"
-version = "0.2.4"
+version = "0.2.5"
 description = "Public archive publisher with optional read-only Core V1 and SDK-host document inspection."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,8 +15,8 @@ keywords = ["nirs4all", "NIRS", "reproducibility", "RO-Crate", "chemometrics", "
 dependencies = ["PyYAML>=5.4"]
 
 [project.optional-dependencies]
-current-reader = ["nirs4all-core>=0.5,<0.6"]
-sdk-host-reader = ["nirs4all>=1.4,<2"]
+current-reader = ["nirs4all-core>=0.6,<0.7"]
+sdk-host-reader = ["nirs4all>=1.6,<1.7"]
 dev = ["pytest>=7", "ruff>=0.5", "mypy>=1.8", "build"]
 
 [project.scripts]
