@@ -7,6 +7,10 @@ hardening pass; earlier history is in git.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-26
+
+- Admit Core 0.7 and SDK 1.7 for the optional document readers.
+
 ## [0.2.5] - 2026-11-19
 
 - Adopt the tested Core 0.6 and SDK 1.6 series for optional read-only current-container inspection.
