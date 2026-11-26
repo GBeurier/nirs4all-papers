@@ -29,8 +29,8 @@ their own license/DOI terms; only deposit what you can redistribute under those 
 ## Cross-repository version constraints
 
 Dependencies on packages from other nirs4all repositories are declared at
-**minor** granularity, never more precisely: `nirs4all-core>=0.6,<0.7` and
-`nirs4all>=1.6,<1.7`. Exact versions live in lockfiles and the release order; the
+**minor** granularity, never more precisely: `nirs4all-core>=0.7,<0.8` and
+`nirs4all>=1.7,<1.8`. Exact versions live in lockfiles and the release order; the
 qualified reader cohort is recorded with each bundle, not in these ranges. In
 return an owner patch release changes no wire format, persisted schema, `.n4a`
 payload semantics or native ABI; such changes need at least a minor release. The
